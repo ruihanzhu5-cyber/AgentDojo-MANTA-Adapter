@@ -44,6 +44,30 @@ uv run python scripts/manta/run_agentdojo_manta.py `
   --planner-mode fixed --max-turns 1 --repair-budget 0 --num-agents 2
 ```
 
+## Bounded live concurrency
+
+Use `scripts/manta/run_batch.py` for independent episodes. Each task runs in a
+separate process with its own AgentDojo environment and TraceLogger directory.
+Start with two workers and increase only after checking the per-task console
+logs for `429`, timeout, or retry events:
+
+```powershell
+$env:MAS_REQUIRE_LIVE_LLM = "1"
+$env:V1_MAX_COST_USD = "5"
+uv run python scripts/manta/run_batch.py `
+  --user-tasks user_task_1,user_task_2 `
+  --suite workspace --clean --parallelism 2
+```
+
+The batch runner caps `--parallelism` at 4. Process-level isolation is required
+because AgentDojo tool environments are mutable; sharing one environment across
+threads would invalidate task and attack traces. The runner never treats a
+failed live request as a mock success when `MAS_REQUIRE_LIVE_LLM=1`.
+
+Provider pricing is not returned by the current DeepSeek-compatible endpoint,
+so live results record `cost_usd` as `null` with
+`cost_status=UNKNOWN_PROVIDER_PRICE`; token counts and latency remain recorded.
+
 Mock runs are labeled `MOCK_SMOKE` and must not be reported as real task
 success rates or attack success rates. A real episode must use
 `--planner-mode task_conditioned` and record the model, AgentDojo revision,

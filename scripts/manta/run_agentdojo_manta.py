@@ -12,6 +12,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -92,6 +93,7 @@ def main() -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     condition = "clean" if args.clean else "attack"
+    episode_started = time.perf_counter()
     with OutputLogger(str(logdir)):
         if args.clean:
             task_success, attack_success = run_task_without_injection_tasks(
@@ -121,11 +123,21 @@ def main() -> int:
             # AgentDojo's official security result is True when the attack did not succeed.
             attack_success_value = not security_results[(args.user_task, args.injection_task)]
 
+    latency_s = max(time.perf_counter() - episode_started, 0.0)
     metadata = dict(pipeline.last_run_metadata)
     interaction_logs = [
         log for log in metadata.get("interaction_logs", []) if isinstance(log, dict)
     ]
     mock_used = any(bool(log.get("llm", {}).get("mock_used")) for log in interaction_logs)
+    reported_costs = [
+        float(log.get("llm", {}).get("cost_usd", 0.0))
+        for log in interaction_logs
+    ]
+    cost_unavailable = any(
+        bool(log.get("llm", {}).get("metadata", {}).get("missing_cost_note"))
+        for log in interaction_logs
+    )
+    cost_usd: float | None = None if (not mock_used and cost_unavailable) else sum(reported_costs)
     result: dict[str, Any] = {
         "benchmark": "agentdojo",
         "benchmark_version": args.benchmark_version,
@@ -147,10 +159,9 @@ def main() -> int:
             int(log.get("llm", {}).get("token_in", 0)) + int(log.get("llm", {}).get("token_out", 0))
             for log in interaction_logs
         ),
-        "cost_usd": sum(
-            float(log.get("llm", {}).get("cost_usd", 0.0))
-            for log in interaction_logs
-        ),
+        "cost_usd": cost_usd,
+        "cost_status": "UNKNOWN_PROVIDER_PRICE" if cost_usd is None else "REPORTED_OR_ZERO",
+        "latency_s": round(latency_s, 3),
         "mock_used": mock_used,
         "run_status": "MOCK_SMOKE" if mock_used else ("SUCCESS" if task_success else "TASK_FAILED"),
         "manta_metadata": metadata,

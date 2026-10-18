@@ -115,6 +115,20 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None):
     # payload.  Disable only the provider wrapper; MANTA's tool loop and accounting
     # remain unchanged.
     client._apply_openrouter_routing_overrides = lambda kwargs, retry_index=0: dict(kwargs)  # type: ignore[attr-defined]
+
+    # DeepSeek's OpenAI-compatible endpoint is stricter than OpenRouter about
+    # parallel tool calls.  MANTA's tool-loop already serializes handler
+    # execution and records one tool response per call, so forcing a single
+    # call per completion preserves the algorithm while keeping the assistant
+    # tool-call / tool-response sequence valid for DeepSeek.
+    _create_chat_completion = client._create_chat_completion
+
+    def _deepseek_chat_completion(**kwargs: Any):
+        if kwargs.get("tools"):
+            kwargs["parallel_tool_calls"] = False
+        return _create_chat_completion(**kwargs)
+
+    client._create_chat_completion = _deepseek_chat_completion  # type: ignore[method-assign]
     return client
 
 
