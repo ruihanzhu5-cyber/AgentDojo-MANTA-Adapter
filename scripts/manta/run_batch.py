@@ -13,6 +13,7 @@ import json
 import os
 import subprocess
 import sys
+import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
@@ -40,6 +41,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-dir", type=Path, default=None)
     parser.add_argument("--logdir", type=Path, default=None)
     parser.add_argument("--allow-mock", action="store_true")
+    parser.add_argument("--seed", type=int, default=0)
     return parser
 
 
@@ -71,7 +73,11 @@ def _run_one(args: argparse.Namespace, task_id: str, output_root: Path, log_root
         str(output_dir),
         "--logdir",
         str(logdir),
+        "--run-id", "episode",
+        "--seed", str(args.seed),
     ]
+    if args.allow_mock:
+        command.append("--allow-mock")
     if args.model:
         command.extend(["--model", args.model])
     if args.clean:
@@ -99,17 +105,17 @@ def _run_one(args: argparse.Namespace, task_id: str, output_root: Path, log_root
         check=False,
     )
     console_path.write_text(completed.stdout + "\n--- STDERR ---\n" + completed.stderr, encoding="utf-8")
-    result_files = list(output_dir.glob("*.json"))
+    result_path = output_dir / "episode" / "result.json"
     result: dict[str, Any] = {
         "task_id": task_id,
         "returncode": completed.returncode,
         "console_path": str(console_path),
     }
-    if result_files:
-        payload = json.loads(result_files[0].read_text(encoding="utf-8"))
+    if result_path.exists():
+        payload = json.loads(result_path.read_text(encoding="utf-8"))
         result.update(
             {
-                "result_path": str(result_files[0]),
+                "result_path": str(result_path),
                 "run_status": payload.get("run_status"),
                 "task_success": payload.get("task_success"),
                 "mock_used": payload.get("mock_used"),
@@ -128,11 +134,16 @@ def main() -> int:
     task_ids = [item.strip() for item in args.user_tasks.split(",") if item.strip()]
     if not task_ids:
         raise SystemExit("--user-tasks must contain at least one task ID")
+    if len(task_ids) != len(set(task_ids)):
+        raise SystemExit("duplicate task IDs would collide within one batch")
+    if args.clean and (args.attack or args.injection_task):
+        raise SystemExit("--clean cannot be combined with attack options")
     if not args.allow_mock and not os.getenv("V1_MAX_COST_USD", "").strip():
         raise SystemExit("set V1_MAX_COST_USD before starting a live batch")
     root = _repo_root()
-    output_root = args.output_dir or root / "results" / "v1" / "agentdojo_batch"
-    log_root = args.logdir or root / "results" / "v1" / "agentdojo_batch_logs"
+    batch_id = uuid.uuid4().hex
+    output_root = (args.output_dir or root / "results" / "v1" / "agentdojo_batch") / batch_id
+    log_root = (args.logdir or root / "results" / "v1" / "agentdojo_batch_logs") / batch_id
     output_root.mkdir(parents=True, exist_ok=True)
     log_root.mkdir(parents=True, exist_ok=True)
 

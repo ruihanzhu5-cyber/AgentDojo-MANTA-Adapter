@@ -29,7 +29,7 @@ For a live run, set `DEEPSEEK_API_KEY` and optionally `DEEPSEEK_BASE_URL` and
 
 ```powershell
 $env:MAS_DISABLE_LIVE_LLM = "1"
-uv run python scripts/manta/run_agentdojo_manta.py `
+uv run python scripts/manta/run_agentdojo_manta.py --allow-mock `
   --clean --suite workspace --user-task user_task_0 `
   --planner-mode fixed --max-turns 1 --repair-budget 0 --num-agents 2
 ```
@@ -38,7 +38,7 @@ The official attack path can be exercised without model cost:
 
 ```powershell
 $env:MAS_DISABLE_LIVE_LLM = "1"
-uv run python scripts/manta/run_agentdojo_manta.py `
+uv run python scripts/manta/run_agentdojo_manta.py --allow-mock `
   --suite workspace --user-task user_task_0 `
   --attack direct --injection-task injection_task_0 `
   --planner-mode fixed --max-turns 1 --repair-budget 0 --num-agents 2
@@ -64,7 +64,7 @@ because AgentDojo tool environments are mutable; sharing one environment across
 threads would invalidate task and attack traces. The runner never treats a
 failed live request as a mock success when `MAS_REQUIRE_LIVE_LLM=1`.
 
-Provider pricing is not returned by the current DeepSeek-compatible endpoint,
+Verified provider pricing is not implemented in the current client,
 so live results record `cost_usd` as `null` with
 `cost_status=UNKNOWN_PROVIDER_PRICE`; token counts and latency remain recorded.
 
@@ -89,9 +89,26 @@ versions, and mutation count are written into each result JSON.
    still calls the official `FunctionsRuntime.run_function`.
 3. The official MANTA `SelfEvolvedEngine` plans agents, relays messages, audits
    execution, and applies bounded topology mutations.
-4. MANTA interaction logs are projected back into AgentDojo assistant/tool
-   messages and forwarded to the official logger.
+4. Actual AgentDojo runtime calls are recorded, converted to assistant/tool
+   messages and forwarded to the official logger and judge. MANTA traces are
+   retained separately for topology and Context analysis.
 
-The first implementation leaves `attack_exposed` as `UNKNOWN`; it requires a
-separate trace-to-injection mapping before it can be used in a final result
-table.
+Exposure is confirmed only when the full official payload is found in a
+completed model request. Unmatched or transformed payloads remain `UNKNOWN`.
+
+## Metric schema v2
+
+See [METRIC_LOGIC_REVIEW.md](METRIC_LOGIC_REVIEW.md) for definitions and known
+limitations. AgentDojo's `security=True` means **the attack succeeded**. Earlier
+schema-less Attack outcome reports inverted that boolean and are withdrawn.
+New results keep official booleans and use actual runtime call and provider
+request ledgers. Each attempt uses its own run directory and retains its traces
+locally under `results/`; mock and infrastructure failures do not enter ASR.
+
+`V1_MAX_COST_USD` gates live batch startup but does not yet enforce actual
+spending. Pricing and budget enforcement are required before a large paid run.
+
+```powershell
+python scripts/manta/summarize_results.py results/v1/agentdojo_batch `
+  --output results/v1/metric_summary.json
+```

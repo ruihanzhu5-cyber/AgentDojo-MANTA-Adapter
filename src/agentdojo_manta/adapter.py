@@ -12,6 +12,8 @@ import json
 import os
 import sys
 import types
+import threading
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -80,7 +82,7 @@ def _import_manta(paths: AdapterPaths):
     return OpenRouterConfig, SelfEvolvedConfig, OpenRouterLLMClient, ExperimentSpec, SelfEvolvedEngine
 
 
-def _make_llm_client(paths: AdapterPaths, model: str | None = None):
+def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=None):
     OpenRouterConfig, _SelfEvolvedConfig, OpenRouterLLMClient, _ExperimentSpec, _Engine = _import_manta(paths)
 
     api_key = os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_COMPATIBLE_API_KEY")
@@ -119,16 +121,75 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None):
         return _create_chat_completion(**kwargs)
 
     client._create_chat_completion = _deepseek_chat_completion  # type: ignore[method-assign]
+    if observer is not None:
+        original_once = client._create_chat_completion_once
+        original_generate = client.generate
+        actor_context = threading.local()
+
+        def observed_generate(**kwargs):
+            actor_context.agent_id = kwargs.get("agent_id")
+            try:
+                result = original_generate(**kwargs)
+                with observer._metrics_lock:
+                    observer.mock_used = observer.mock_used or bool(result.mock_used)
+                return result
+            finally:
+                actor_context.agent_id = None
+
+        def observed_once(**kwargs):
+            def strings(value):
+                if isinstance(value, str):
+                    yield value
+                elif isinstance(value, dict):
+                    for item in value.values():
+                        yield from strings(item)
+                elif isinstance(value, (list, tuple)):
+                    for item in value:
+                        yield from strings(item)
+            messages_text = "\n".join(strings(kwargs.get("messages", [])))
+            with observer._metrics_lock:
+                matches = [key for key, payload in observer.injections.items()
+                           if payload and payload in messages_text]
+            record = {"agent_id": getattr(actor_context, "agent_id", None),
+                      "model": kwargs.get("model"), "status": "error",
+                      "matched_injection_keys": matches, "usage_available": False}
+            start = time.perf_counter()
+            try:
+                response = original_once(**kwargs)
+                usage = getattr(response, "usage", None)
+                record.update(status="completed", usage_available=usage is not None,
+                              token_in=getattr(usage, "prompt_tokens", None),
+                              token_out=getattr(usage, "completion_tokens", None))
+                return response
+            except Exception as exc:
+                record["error_type"] = type(exc).__name__
+                record["http_status"] = getattr(exc, "status_code", None)
+                raise
+            finally:
+                record["latency_s"] = time.perf_counter() - start
+                with observer._metrics_lock:
+                    observer.request_records.append(record)
+
+        client.generate = observed_generate
+        client._create_chat_completion_once = observed_once
     return client
 
 
-def _function_to_manta_tool(runtime: FunctionsRuntime, env: Env, function: Any) -> dict[str, Any]:
+def _function_to_manta_tool(runtime: FunctionsRuntime, env: Env, function: Any, *, observer=None) -> dict[str, Any]:
     """Convert one AgentDojo Function into MANTA's tool schema + bound handler."""
 
     schema = function.parameters.model_json_schema()
 
     def handler(arguments: dict[str, Any]) -> Any:
         value, error = runtime.run_function(env, function.name, arguments)
+        if observer is not None:
+            from agentdojo.agent_pipeline.tool_execution import tool_result_to_str
+            with observer._metrics_lock:
+                observer.runtime_calls.append({
+                    "tool_name": function.name, "arguments": dict(arguments),
+                    "output": tool_result_to_str(value) if error is None else str(error),
+                    "error": error,
+                })
         if error is not None:
             return {"error": error}
         return value
@@ -177,9 +238,12 @@ def _build_agentdojo_messages(query: str, metadata: dict[str, Any], final_answer
     messages: list[ChatMessage] = [
         ChatUserMessage(role="user", content=[text_content_block_from_string(query)])
     ]
-    logs = metadata.get("interaction_logs", [])
-    if not isinstance(logs, list):
-        logs = []
+    # The official judge reconstructs its function trace from assistant calls.
+    # Use actual FunctionsRuntime invocations, including calls from discarded
+    # stages, and exclude MANTA's synthetic/skipped calls and proposals.
+    records = metadata.get("agentdojo_runtime_calls", [])
+    logs = [{"assistant_message": {"content": ""}, "tool_calls": [record]}
+            for record in records]
 
     for index, log in enumerate(logs):
         if not isinstance(log, dict):
@@ -248,6 +312,13 @@ class MantaAgentDojoPipeline(BasePipelineElement):
         self.paths = paths
         self.model = model or os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
         self.num_agents = int(num_agents)
+        self._metrics_lock = threading.Lock()
+        self.request_records: list[dict[str, Any]] = []
+        self.runtime_calls: list[dict[str, Any]] = []
+        self.injections: dict[str, str] = {}
+        self.mock_used = False
+        self.execution_completed = False
+        self.seed = 0
         self.max_initial_agents = max(
             self.num_agents,
             int(os.getenv("MANTA_MAX_INITIAL_AGENTS", "5")),
@@ -269,7 +340,7 @@ class MantaAgentDojoPipeline(BasePipelineElement):
             skill_update_batch_size=0,
         )
         self.se_config.validate()
-        self._engine = SelfEvolvedEngine(_make_llm_client(paths, self.model), self.se_config)
+        self._engine = SelfEvolvedEngine(_make_llm_client(paths, self.model, observer=self), self.se_config)
         self._experiment_spec = ExperimentSpec(
             topology="self_evolved",
             num_agents=int(num_agents),
@@ -309,10 +380,12 @@ class MantaAgentDojoPipeline(BasePipelineElement):
         extra_args: dict | None = None,
     ) -> tuple[str, FunctionsRuntime, Env, list[ChatMessage], dict]:
         extra_args = dict(extra_args or {})
+        from agentdojo.logging import Logger
+        self.injections = dict(getattr(Logger.get(), "context", {}).get("injections", {}))
         task_id = str(extra_args.get("task_id") or self.task_id_lookup.get(query, "agentdojo_task"))
-        seed = int(extra_args.get("seed", 0))
+        seed = int(extra_args.get("seed", self.seed))
         run_index = int(extra_args.get("run_index", 0))
-        tools = [_function_to_manta_tool(runtime, env, function) for function in runtime.functions.values()]
+        tools = [_function_to_manta_tool(runtime, env, function, observer=self) for function in runtime.functions.values()]
         task = AgentDojoTask(task_id=task_id, prompt=query, benchmark_name="agentdojo")
         result = self._engine.run(
             task=task,
@@ -324,6 +397,7 @@ class MantaAgentDojoPipeline(BasePipelineElement):
             max_tool_iterations=int(extra_args.get("max_tool_iterations", 8)),
         )
         metadata = dict(result.run_metadata)
+        metadata["agentdojo_runtime_calls"] = list(self.runtime_calls)
         metadata["manta_commit"] = os.getenv("MANTA_COMMIT", "3da4087")
         metadata["agentdojo_adapter"] = "official_task_suite_pipeline"
         metadata["manta_config"] = {
@@ -338,6 +412,7 @@ class MantaAgentDojoPipeline(BasePipelineElement):
         extra_args = {**extra_args, "manta_run_metadata": metadata, "manta_trace_events": result.trace_events}
         self.last_run_metadata = metadata
         self.last_trace_events = list(result.trace_events)
+        self.execution_completed = True
         output_messages = _build_agentdojo_messages(query, metadata, result.final_answer)
         # AgentDojo's official runner records messages through its active Logger;
         # custom pipeline elements must forward them explicitly.
