@@ -16,6 +16,19 @@ utility/security judges; MANTA owns only the multi-agent execution layer.
 The MANTA snapshot is included as an upstream source copy for reproducibility;
 its license is retained in `upstreams/manta/LICENSE`.
 
+## Completed experiment — 2026-10-19
+
+The MANTA row of E2 is complete: 80 official direct-attack scenes, 160 valid
+Clean/Attack episodes, seed 42. See the
+[report, result tables and all retained redacted logs](../../reports/2026-10-19-manta-agentdojo/README.md).
+Clean utility is 65/80, attacked utility 66/80, targeted ASR 1/80; 74/80 attacked
+episodes have confirmed exposure and six remain UNKNOWN. These are descriptive
+single-model, single-seed results; other methods and causal propagation studies
+remain separate work.
+
+For the frozen formal queue and resume instructions, see
+[START_FORMAL.md](START_FORMAL.md). Its episode concurrency limit is eight.
+
 ## Install
 
 ```powershell
@@ -64,9 +77,11 @@ because AgentDojo tool environments are mutable; sharing one environment across
 threads would invalidate task and attack traces. The runner never treats a
 failed live request as a mock success when `MAS_REQUIRE_LIVE_LLM=1`.
 
-Verified provider pricing is not implemented in the current client,
-so live results record `cost_usd` as `null` with
-`cost_status=UNKNOWN_PROVIDER_PRICE`; token counts and latency remain recorded.
+Provider invoice cost remains unknown, so episode `cost_usd` stays null.
+The formal queue additionally uses the shared request budget ledger, verified
+Flash peak-price upper bounds and conservative reservations; those amounts are
+reported separately from invoice cost. The legacy `run_batch.py` example above
+does not configure that shared ledger.
 
 Mock runs are labeled `MOCK_SMOKE` and must not be reported as real task
 success rates or attack success rates. A real episode must use
@@ -105,8 +120,10 @@ New results keep official booleans and use actual runtime call and provider
 request ledgers. Each attempt uses its own run directory and retains its traces
 locally under `results/`; mock and infrastructure failures do not enter ASR.
 
-`V1_MAX_COST_USD` gates live batch startup but does not yet enforce actual
-spending. Pricing and budget enforcement are required before a large paid run.
+`V1_MAX_COST_USD` alone only gates the legacy batch launcher. The formal queue
+sets both that cap and `V1_BUDGET_DB`, enabling request-level shared reservations,
+usage settlement and conservative retention of unreturned requests. See
+[START_FORMAL.md](START_FORMAL.md) for pricing assumptions and scope.
 
 ```powershell
 python scripts/manta/summarize_results.py results/v1/agentdojo_batch `

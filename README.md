@@ -26,6 +26,11 @@ This public checkout also contains the V1 MANTA integration used for the
 adaptive-topology security experiment. See [`docs/manta/README.md`](docs/manta/README.md)
 for the adapter boundary, pinned MANTA snapshot, and one-episode smoke commands.
 
+The completed **MANTA × AgentDojo** experiment (80 scenes, 160 valid paired
+episodes, seed 42, official direct attack) is published with the full report,
+CSV tables, configuration, checksums and all retained logs in redacted archives:
+**[experiment report and logs](reports/2026-10-19-manta-agentdojo/README.md)**.
+
 > [!IMPORTANT]
 > Note that the API of the package is still under development and might change in the future.
 

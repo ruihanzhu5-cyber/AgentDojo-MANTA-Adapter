@@ -1,0 +1,14 @@
+{
+  "recorded_base_git_commits": [
+    "0127e5ded1c919655b8341f6e414b68e016cad86"
+  ],
+  "adapter_source_sha256": "2b024bcd6b025ef4bc9e8ff613cb75d28c2e7d42d03624e296b8053be79e6a52",
+  "manta_source_sha256": "61950c82b1704c85f147009d109a6c6e97baaeffbf1680dc5b45063219cd4b73",
+  "frozen_source_sha256": "81f0e56e229c9f049d384245ee61cd8ad6358146baa782c4de7a9ec4c38c3621",
+  "upstream_agentdojo_commit": "089ed468cf3ed0322acc66b0211f26d9d90dbf60",
+  "upstream_manta_commit": "3da4087",
+  "response_models": {
+    "deepseek-flash": 3390
+  },
+  "note": "Execution used working-tree changes beyond the recorded baseline HEAD. Publication includes those files; SHA256 matches every selected episode."
+}

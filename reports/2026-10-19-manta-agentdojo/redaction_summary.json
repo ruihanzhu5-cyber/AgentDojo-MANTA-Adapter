@@ -1,0 +1,91 @@
+{
+  "scope": "all currently retained results/v1 files",
+  "archives": [
+    {
+      "archive": "logs/formal_80_seed42.tar.gz",
+      "files": 679,
+      "raw_bytes": 234925673,
+      "compressed_bytes": 29136370,
+      "sha256": "66e2879dfe15a26034f9222cfebf2c9b7a417269a989823e0852d870a170a2dd",
+      "redactions": {
+        "ACCOUNT": 74780,
+        "SENSITIVE_FIELD": 310,
+        "LONG_IDENTIFIER": 1013,
+        "INLINE_SECRET": 4397,
+        "EMAIL": 166479,
+        "PHONE": 505
+      }
+    },
+    {
+      "archive": "logs/formal_launcher_smoke_20261018.tar.gz",
+      "files": 37,
+      "raw_bytes": 4122463,
+      "compressed_bytes": 468102,
+      "sha256": "2b6f2ee9e3c0025764ea52a86ec86545b7e23c007813db054fd10c6b30a919b0",
+      "redactions": {
+        "ACCOUNT": 1,
+        "SENSITIVE_FIELD": 4,
+        "EMAIL": 1
+      }
+    },
+    {
+      "archive": "logs/formal_resume_smoke_20261018.tar.gz",
+      "files": 13,
+      "raw_bytes": 813214,
+      "compressed_bytes": 105199,
+      "sha256": "b1d2b0888a37ec20fcad13ec2b7657100236075a68f04f6ad3eac0097c356502",
+      "redactions": {
+        "SENSITIVE_FIELD": 2
+      }
+    },
+    {
+      "archive": "logs/metric_audit.tar.gz",
+      "files": 10,
+      "raw_bytes": 603319,
+      "compressed_bytes": 65180,
+      "sha256": "98f1ebb335538fb13d9a7cc9a94b00c2a074f8b36f36b9c3e03e1239221443ef",
+      "redactions": {
+        "EMAIL": 1,
+        "PHONE": 88
+      }
+    },
+    {
+      "archive": "logs/paired_pilot.tar.gz",
+      "files": 54,
+      "raw_bytes": 5507915,
+      "compressed_bytes": 632653,
+      "sha256": "de13661554f74d561b2fa0aeb3278edd435147a545b5e96d6e7604558d7b2063",
+      "redactions": {
+        "SENSITIVE_FIELD": 1,
+        "LONG_IDENTIFIER": 8,
+        "INLINE_SECRET": 44,
+        "EMAIL": 3013
+      }
+    },
+    {
+      "archive": "logs/root_files.tar.gz",
+      "files": 1,
+      "raw_bytes": 325,
+      "compressed_bytes": 327,
+      "sha256": "d6a1323fd87f9a8e5ebd9bb00f8170ce8f191555237ccdd5269460960bb0e8ef",
+      "redactions": {}
+    }
+  ],
+  "replacements": {
+    "ENV_CREDENTIAL": 0,
+    "ACCOUNT": 74781,
+    "SENSITIVE_FIELD": 317,
+    "LONG_IDENTIFIER": 1021,
+    "INLINE_SECRET": 4441,
+    "EMAIL": 169494,
+    "PHONE": 593
+  },
+  "notes": [
+    "Raw originals are not overwritten.",
+    "Email/account pseudonyms are consistent within the export; the mapping is not published.",
+    "Real environment credentials, local user homes, and synthetic credential/contact/account values are redacted.",
+    "Raw SHA256 values refer to whole files, not individual secrets.",
+    "Scores and exposure were computed on original evidence before redaction; redacted content cannot replay exact judging.",
+    "Earlier deleted logs cannot be recovered. Pilot/mock/blocked attempts are included but excluded from formal denominators."
+  ]
+}

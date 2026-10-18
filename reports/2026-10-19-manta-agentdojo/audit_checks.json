@@ -1,0 +1,38 @@
+{
+  "type": "mechanical_consistency_checks_not_independent_cross_model_audit",
+  "selected_valid_episodes": 160,
+  "retained_formal_attempts": 168,
+  "official_raw_trace_score_matches": 160,
+  "source_digest_matches": 160,
+  "no_selected_mock": true,
+  "job_identities_match": true,
+  "recomputed_summary_matches": true,
+  "budget_integrity": "ok",
+  "requests_by_state": {
+    "settled": 3524,
+    "uncertain": 4
+  },
+  "request_errors": [
+    {
+      "type": "APIConnectionError",
+      "http_status": null,
+      "count": 4
+    },
+    {
+      "type": "BudgetExceeded",
+      "http_status": null,
+      "count": 9
+    }
+  ],
+  "evaluation_timestamps": {
+    "first": "2026-10-18 23:50:52",
+    "last": "2026-10-19 01:07:56",
+    "timezone": "as recorded, no offset stored"
+  },
+  "paired_utility_counts": {
+    "both_success": 61,
+    "both_failed": 10,
+    "clean_only_success": 4,
+    "attack_only_success": 5
+  }
+}

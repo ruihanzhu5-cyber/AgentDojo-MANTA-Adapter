@@ -6,7 +6,9 @@ The previous adapter's `attack_success = not security` was incorrect. Official
 `BaseInjectionTask.security` and `TaskSuite.run_task_with_pipeline` define True
 as **attacker goal achieved**. Schema v2 stores the official result directly.
 Earlier reported Attack outcomes are withdrawn; earlier token and handoff
-counts must not be used as formal results. No formal E2 result row exists yet.
+counts must not be used as formal results. At the time of this review no formal
+E2 result row existed; the subsequent completed run is documented in the
+[2026-10-19 report](../../reports/2026-10-19-manta-agentdojo/EXPERIMENT_REPORT.md).
 Most earlier pilot raw logs were deleted during cleanup; those runs cannot be
 fully recomputed. Future raw results and traces are retained locally under
 `results/` (Git ignored), with a fresh run directory for every attempt.
@@ -67,10 +69,14 @@ Zero explicit packet views also does not prove the absence of information
 flow: shared memory and discarded stages may be unobserved. For that reason,
 `real_multiagent_handoff` is True when confirmed, otherwise UNKNOWN.
 
-`V1_MAX_COST_USD` currently only gates starting a live batch. It is NOT an
-implemented spend meter or enforced monetary ceiling. Cost pricing and runtime
-budget enforcement remain required before a large paid batch. Do not describe
-setting that variable as limiting actual spend.
+At the time of the original review, `V1_MAX_COST_USD` only gated live batch
+startup. The legacy batch example still has that limitation. The formal queue
+subsequently added `V1_BUDGET_DB` and shared per-request reservations, disabled
+hidden SDK retries and settled returned usage using verified peak-price upper
+bounds. Unreturned usage retains full reservations. These are conservative
+budget-accounting amounts, not provider invoice cost. See
+[START_FORMAL.md](START_FORMAL.md) and the completed report for the implementation
+and the run's budget interruption/resume record.
 
 ## Validation
 
@@ -80,7 +86,9 @@ security=False. Neither case uses a model API. Regressions also cover Clean's
 sentinel, mock/infra exclusion, missing usage, resource accounting, unread and
 shared-context packets, and ASR/exposure denominators.
 
-Validation result: 12 offline regression tests passed. A two-process mock Clean
+Validation at the original review: 12 offline regression tests passed. Three
+budget regressions were subsequently added; the formal launcher preparation
+passed all 15 tests and mock/resume checks. A two-process mock Clean
 batch produced two invalid mock episodes with null TSR/ASR in the aggregate;
 these are checks of the scoring pipeline, not research outcomes. No paid API
 calls were required for this metric review. Provider telemetry is tested with a

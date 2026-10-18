@@ -101,6 +101,15 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
         "auditor": os.getenv("DEEPSEEK_AUDITOR_MODEL", model_name),
     }
     client = OpenRouterLLMClient(config, models)
+    from agentdojo_manta.budget import configured_budget
+    budget = configured_budget()
+    if budget is not None:
+        from urllib.parse import urlparse
+        if urlparse(base_url).hostname != "api.deepseek.com":
+            raise ValueError("Verified budget prices require api.deepseek.com")
+        # MANTA's own retries remain observed; eliminate hidden SDK retries.
+        if client.client is not None:
+            client.client = client.client.with_options(max_retries=0)
 
     # OpenRouterLLMClient adds OpenRouter-only ``extra_body.provider`` routing.
     # DeepSeek's endpoint is OpenAI-compatible but does not need that routing
@@ -154,14 +163,23 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
                       "model": kwargs.get("model"), "status": "error",
                       "matched_injection_keys": matches, "usage_available": False}
             start = time.perf_counter()
+            reservation = None
             try:
+                if budget is not None:
+                    reservation = budget.reserve(kwargs.get("model"), int(kwargs["max_tokens"]))
+                    record["budget_request_id"] = reservation
                 response = original_once(**kwargs)
                 usage = getattr(response, "usage", None)
+                record["provider_model"] = getattr(response, "model", None)
+                if budget is not None:
+                    record["cost_upper_bound_usd"] = budget.settle(reservation, usage)
                 record.update(status="completed", usage_available=usage is not None,
                               token_in=getattr(usage, "prompt_tokens", None),
                               token_out=getattr(usage, "completion_tokens", None))
                 return response
             except Exception as exc:
+                if budget is not None and reservation is not None:
+                    budget.uncertain(reservation)
                 record["error_type"] = type(exc).__name__
                 record["http_status"] = getattr(exc, "status_code", None)
                 raise
