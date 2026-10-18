@@ -2,8 +2,8 @@
 
 This adapter deliberately keeps AgentDojo in charge of task setup, tool execution,
 injection construction, and utility/security evaluation.  MANTA only owns the
-multi-agent execution layer.  The pinned MANTA checkout is an external dependency
-under ``work/``; it is imported by path and is not copied into this repository.
+multi-agent execution layer.  The pinned MANTA source is vendored under
+``upstreams/manta`` and imported by path, separate from the AgentDojo package.
 """
 
 from __future__ import annotations
@@ -78,16 +78,6 @@ def _import_manta(paths: AdapterPaths):
     from MAS.self_evolved.engine import SelfEvolvedEngine  # type: ignore
 
     return OpenRouterConfig, SelfEvolvedConfig, OpenRouterLLMClient, ExperimentSpec, SelfEvolvedEngine
-
-
-class DeepSeekLLMClient:
-    """OpenAI-compatible DeepSeek client with MANTA's provider routing disabled."""
-
-    def __init__(self, base_client: Any):
-        self._client = base_client
-
-    def generate(self, **kwargs: Any):
-        return self._client.generate(**kwargs)
 
 
 def _make_llm_client(paths: AdapterPaths, model: str | None = None):
@@ -307,9 +297,10 @@ class MantaAgentDojoPipeline(BasePipelineElement):
         query: str,
         runtime: FunctionsRuntime,
         env: Env = EmptyEnv(),
-        messages: list[ChatMessage] | tuple[ChatMessage, ...] = [],
-        extra_args: dict = {},
+        messages: list[ChatMessage] | tuple[ChatMessage, ...] = (),
+        extra_args: dict | None = None,
     ) -> tuple[str, FunctionsRuntime, Env, list[ChatMessage], dict]:
+        extra_args = dict(extra_args or {})
         task_id = str(extra_args.get("task_id") or self.task_id_lookup.get(query, "agentdojo_task"))
         seed = int(extra_args.get("seed", 0))
         run_index = int(extra_args.get("run_index", 0))

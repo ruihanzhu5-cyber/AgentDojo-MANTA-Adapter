@@ -31,10 +31,10 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--injection-task", default=None)
     parser.add_argument("--parallelism", type=int, default=2)
     parser.add_argument("--model", default=None)
-    parser.add_argument("--num-agents", type=int, default=2)
-    parser.add_argument("--max-turns", type=int, default=1)
-    parser.add_argument("--repair-budget", type=int, default=0)
-    parser.add_argument("--planner-mode", choices=["task_conditioned", "fixed"], default="fixed")
+    parser.add_argument("--num-agents", type=int, default=3)
+    parser.add_argument("--max-turns", type=int, default=2)
+    parser.add_argument("--repair-budget", type=int, default=1)
+    parser.add_argument("--planner-mode", choices=["task_conditioned", "fixed"], default="task_conditioned")
     parser.add_argument("--audit-mode", choices=["heuristic", "hybrid", "llm_judge"], default="heuristic")
     parser.add_argument("--benchmark-version", default="v1.2.2")
     parser.add_argument("--output-dir", type=Path, default=None)
@@ -84,7 +84,9 @@ def _run_one(args: argparse.Namespace, task_id: str, output_root: Path, log_root
     env = os.environ.copy()
     env["PYTHONPATH"] = str(_repo_root() / "src") + os.pathsep + env.get("PYTHONPATH", "")
     env["MAS_REQUIRE_LIVE_LLM"] = "0" if args.allow_mock else "1"
-    if not args.allow_mock:
+    if args.allow_mock:
+        env["MAS_DISABLE_LIVE_LLM"] = "1"
+    else:
         env.pop("MAS_DISABLE_LIVE_LLM", None)
     console_path = logdir / "console.log"
     logdir.mkdir(parents=True, exist_ok=True)
@@ -126,6 +128,8 @@ def main() -> int:
     task_ids = [item.strip() for item in args.user_tasks.split(",") if item.strip()]
     if not task_ids:
         raise SystemExit("--user-tasks must contain at least one task ID")
+    if not args.allow_mock and not os.getenv("V1_MAX_COST_USD", "").strip():
+        raise SystemExit("set V1_MAX_COST_USD before starting a live batch")
     root = _repo_root()
     output_root = args.output_dir or root / "results" / "v1" / "agentdojo_batch"
     log_root = args.logdir or root / "results" / "v1" / "agentdojo_batch_logs"

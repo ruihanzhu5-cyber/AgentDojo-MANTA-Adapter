@@ -614,7 +614,7 @@ class OpenRouterLLMClient:
                 tool_turns.append(current_turn)
                 break
 
-            for tool_call in serialized_tool_calls:
+            for tool_index, tool_call in enumerate(serialized_tool_calls):
                 fn = tool_call["function"]
                 api_tool_name = str(fn.get("name") or "")
                 handler_key = self._resolve_emitted_tool_name(api_tool_name, tool_handlers)
@@ -714,6 +714,30 @@ class OpenRouterLLMClient:
                             ),
                         }
                     )
+                    for pending_call in serialized_tool_calls[tool_index + 1 :]:
+                        pending_fn = pending_call["function"]
+                        pending_name = str(pending_fn.get("name") or "")
+                        pending_id = str(pending_call.get("id") or "")
+                        pending_output = (
+                            "Skipped because the tool-loop stopped after a repeated call."
+                        )
+                        current_turn.tool_messages.append(
+                            {
+                                "role": "tool",
+                                "tool_call_id": pending_id,
+                                "name": pending_name,
+                                "content": pending_output,
+                            }
+                        )
+                        pending_record = {
+                            "tool_name": original_tool_names.get(pending_name, pending_name),
+                            "arguments": {},
+                            "status": "skipped",
+                            "error": pending_output,
+                            "output": {"error": pending_output},
+                        }
+                        tool_call_records.append(pending_record)
+                        current_turn.tool_records.append(pending_record)
                     stopped_early = True
                     break
 
@@ -756,6 +780,30 @@ class OpenRouterLLMClient:
                             f"tool={tool_name},consecutive={consecutive_tool_failures[tool_name]},"
                             f"limit={failure_limit}"
                         )
+                        for pending_call in serialized_tool_calls[tool_index + 1 :]:
+                            pending_fn = pending_call["function"]
+                            pending_name = str(pending_fn.get("name") or "")
+                            pending_id = str(pending_call.get("id") or "")
+                            pending_output = (
+                                "Skipped because the tool-loop stopped after repeated tool failures."
+                            )
+                            current_turn.tool_messages.append(
+                                {
+                                    "role": "tool",
+                                    "tool_call_id": pending_id,
+                                    "name": pending_name,
+                                    "content": pending_output,
+                                }
+                            )
+                            pending_record = {
+                                "tool_name": original_tool_names.get(pending_name, pending_name),
+                                "arguments": {},
+                                "status": "skipped",
+                                "error": pending_output,
+                                "output": {"error": pending_output},
+                            }
+                            tool_call_records.append(pending_record)
+                            current_turn.tool_records.append(pending_record)
                         current_turn.tool_messages.append(
                             {
                                 "role": "user",
