@@ -10,6 +10,10 @@
 
 **[阅读完整实验报告](EXPERIMENT_REPORT.md)**
 
+**[唯一攻击成功案例：Agent 传播链与自适应拓扑核对](CASE_STUDY_slack_07.md)**
+
+补充分析确认：coordinator 在交接前已完成目标访问；两个 worker 在首次请求前收到含 payload 的真实 packet，其中一个随后再次访问目标。该 case 的图始终为 3-Agent star，未产生 mutation。整轮图形态受到 MANTA 原生 transactional_star 协议约束，详见病例分析及证据。
+
 ## 数据入口
 
 - [160 条正式 episode CSV](episode_results.csv)
