@@ -389,3 +389,6 @@ notebooks/plots/
 
 runs/
 .claude
+
+# Local benchmark outputs and trace logs
+results/

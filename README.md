@@ -20,6 +20,12 @@
 pip install agentdojo
 ```
 
+## MANTA adapter experiment
+
+This public checkout also contains the V1 MANTA integration used for the
+adaptive-topology security experiment. See [`docs/manta/README.md`](docs/manta/README.md)
+for the adapter boundary, pinned MANTA snapshot, and one-episode smoke commands.
+
 > [!IMPORTANT]
 > Note that the API of the package is still under development and might change in the future.
 

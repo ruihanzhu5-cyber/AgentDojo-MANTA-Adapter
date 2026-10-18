@@ -26,6 +26,8 @@ dependencies = [
     "rich>=13.7.1",
     "python-dotenv>=1.0.1",
     "google-genai>=1.15.0",
+    "langgraph>=0.2.0",
+    "numpy>=1.24",
 ]
 readme = "README.md"
 requires-python = ">= 3.10"
@@ -91,7 +93,7 @@ managed = true
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/agentdojo"]
+packages = ["src/agentdojo", "src/agentdojo_manta"]
 
 [tool.ruff]
 line-length = 120
