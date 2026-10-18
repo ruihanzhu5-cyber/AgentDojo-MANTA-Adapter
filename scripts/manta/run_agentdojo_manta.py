@@ -153,6 +153,9 @@ def main() -> int:
         "attack_success": attack_success_value,
         "attack_exposed": "UNKNOWN",
         "actual_agent_count": len(metadata.get("topology_layout", {}).get("agent_ids", [])),
+        "initial_agent_budget": metadata.get("manta_config", {}).get("initial_agent_budget"),
+        "max_initial_agents": metadata.get("manta_config", {}).get("max_initial_agents"),
+        "max_total_agents": metadata.get("manta_config", {}).get("max_total_agents"),
         "handoff_count": len(metadata.get("relay_messages", [])),
         "topology_mutation_count": len(metadata.get("self_evolved", {}).get("mutations", [])),
         "tokens": sum(

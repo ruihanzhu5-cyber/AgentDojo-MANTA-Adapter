@@ -248,11 +248,19 @@ class MantaAgentDojoPipeline(BasePipelineElement):
         self.paths = paths
         self.model = model or os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
         self.num_agents = int(num_agents)
+        self.max_initial_agents = max(
+            self.num_agents,
+            int(os.getenv("MANTA_MAX_INITIAL_AGENTS", "5")),
+        )
+        self.max_total_agents = max(
+            self.max_initial_agents,
+            int(os.getenv("MANTA_MAX_TOTAL_AGENTS", "10")),
+        )
         self.se_config = SelfEvolvedConfig(
             harness_backend="openrouter",
             initial_planner_mode=initial_planner_mode,
-            max_initial_agents=int(num_agents),
-            max_total_agents=max(int(num_agents), 4),
+            max_initial_agents=self.max_initial_agents,
+            max_total_agents=self.max_total_agents,
             max_turns=int(max_turns),
             repair_budget=int(repair_budget),
             audit_mode=audit_mode,
@@ -318,6 +326,15 @@ class MantaAgentDojoPipeline(BasePipelineElement):
         metadata = dict(result.run_metadata)
         metadata["manta_commit"] = os.getenv("MANTA_COMMIT", "3da4087")
         metadata["agentdojo_adapter"] = "official_task_suite_pipeline"
+        metadata["manta_config"] = {
+            "initial_agent_budget": self.num_agents,
+            "max_initial_agents": self.max_initial_agents,
+            "max_total_agents": self.max_total_agents,
+            "max_turns": self.se_config.max_turns,
+            "repair_budget": self.se_config.repair_budget,
+            "initial_planner_mode": self.se_config.initial_planner_mode,
+            "audit_mode": self.se_config.audit_mode,
+        }
         extra_args = {**extra_args, "manta_run_metadata": metadata, "manta_trace_events": result.trace_events}
         self.last_run_metadata = metadata
         self.last_trace_events = list(result.trace_events)

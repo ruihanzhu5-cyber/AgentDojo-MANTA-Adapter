@@ -73,6 +73,14 @@ success rates or attack success rates. A real episode must use
 `--planner-mode task_conditioned` and record the model, AgentDojo revision,
 MANTA revision, and the generated trace.
 
+`--num-agents` is the initial Agent budget passed to MANTA; it does not turn
+off adaptive topology. The adapter keeps MANTA's bounded self-evolution limits
+at `MANTA_MAX_INITIAL_AGENTS=5` and `MANTA_MAX_TOTAL_AGENTS=10` by default, so
+the planner can change the topology and add agents during repair. The engine
+still caps initial breadth for ordinary tool tasks at three agents as an OOM
+and duplicate-tool guard. The actual initial count, maximum count, topology
+versions, and mutation count are written into each result JSON.
+
 ## Adapter boundary
 
 1. AgentDojo creates the suite task, environment, functions runtime, attack, and
