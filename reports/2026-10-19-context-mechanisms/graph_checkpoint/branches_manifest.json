@@ -1,0 +1,59 @@
+{
+  "selected": [
+    {
+      "id": "workspace_18__attack",
+      "checkpoint_path": "capture/workspace_18__attack/attempt_001/checkpoint.json",
+      "checkpoint_sha256": "58312fa9c21c073298d0bc5dad4e67935e2e1e859cadeafda05ed34504a03441"
+    }
+  ],
+  "jobs": [
+    {
+      "id": "workspace_18__attack__G1_r1",
+      "state_id": "workspace_18__attack",
+      "condition": "G1",
+      "repeat": 1,
+      "checkpoint_path": "capture/workspace_18__attack/attempt_001/checkpoint.json",
+      "checkpoint_sha256": "58312fa9c21c073298d0bc5dad4e67935e2e1e859cadeafda05ed34504a03441"
+    },
+    {
+      "id": "workspace_18__attack__G0_r1",
+      "state_id": "workspace_18__attack",
+      "condition": "G0",
+      "repeat": 1,
+      "checkpoint_path": "capture/workspace_18__attack/attempt_001/checkpoint.json",
+      "checkpoint_sha256": "58312fa9c21c073298d0bc5dad4e67935e2e1e859cadeafda05ed34504a03441"
+    },
+    {
+      "id": "workspace_18__attack__G1_r2",
+      "state_id": "workspace_18__attack",
+      "condition": "G1",
+      "repeat": 2,
+      "checkpoint_path": "capture/workspace_18__attack/attempt_001/checkpoint.json",
+      "checkpoint_sha256": "58312fa9c21c073298d0bc5dad4e67935e2e1e859cadeafda05ed34504a03441"
+    },
+    {
+      "id": "workspace_18__attack__G0_r2",
+      "state_id": "workspace_18__attack",
+      "condition": "G0",
+      "repeat": 2,
+      "checkpoint_path": "capture/workspace_18__attack/attempt_001/checkpoint.json",
+      "checkpoint_sha256": "58312fa9c21c073298d0bc5dad4e67935e2e1e859cadeafda05ed34504a03441"
+    },
+    {
+      "id": "workspace_18__attack__G0_r3",
+      "state_id": "workspace_18__attack",
+      "condition": "G0",
+      "repeat": 3,
+      "checkpoint_path": "capture/workspace_18__attack/attempt_001/checkpoint.json",
+      "checkpoint_sha256": "58312fa9c21c073298d0bc5dad4e67935e2e1e859cadeafda05ed34504a03441"
+    },
+    {
+      "id": "workspace_18__attack__G1_r3",
+      "state_id": "workspace_18__attack",
+      "condition": "G1",
+      "repeat": 3,
+      "checkpoint_path": "capture/workspace_18__attack/attempt_001/checkpoint.json",
+      "checkpoint_sha256": "58312fa9c21c073298d0bc5dad4e67935e2e1e859cadeafda05ed34504a03441"
+    }
+  ]
+}

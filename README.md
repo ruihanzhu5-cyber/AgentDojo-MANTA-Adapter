@@ -31,6 +31,13 @@ episodes, seed 42, official direct attack) is published with the full report,
 CSV tables, configuration, checksums and all retained logs in redacted archives:
 **[experiment report and logs](reports/2026-10-19-manta-agentdojo/README.md)**.
 
+The follow-up context experiments (24 valid local worker replays and 6 native
+graph continuations from 1 eligible checkpoint among 12 capture candidates)
+are published separately with reports, configurations, analysis and all retained
+redacted logs: **[context mechanism reports and logs](reports/2026-10-19-context-mechanisms/README.md)**.
+These are exploratory mechanism studies and do not establish general failure
+of graph-based defenses.
+
 > [!IMPORTANT]
 > Note that the API of the package is still under development and might change in the future.
 

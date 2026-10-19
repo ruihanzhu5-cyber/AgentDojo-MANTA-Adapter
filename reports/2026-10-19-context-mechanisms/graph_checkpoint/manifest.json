@@ -1,0 +1,158 @@
+{
+  "protocol": "manta-native-graph-checkpoint-v1",
+  "code_sha256": "542d6b508b510a2843b21fddbd907a1291e2177130f305e59f594abc85b44db4",
+  "candidates": [
+    {
+      "id": "travel_10__attack",
+      "suite": "travel",
+      "task_id": "user_task_2",
+      "injection_task": "injection_task_3",
+      "payload_sha256": "8196eaf78a376300285a9942bde7dfb9f669b4d6f8c4dd122c2e83bca30c8def",
+      "original_had_mutation": true
+    },
+    {
+      "id": "workspace_06__attack",
+      "suite": "workspace",
+      "task_id": "user_task_5",
+      "injection_task": "injection_task_6",
+      "payload_sha256": "9ae99bf0d92129c9ac6d84b53d117ec9b595dbe023ba9087ea925bfc849a609b",
+      "original_had_mutation": true
+    },
+    {
+      "id": "workspace_07__attack",
+      "suite": "workspace",
+      "task_id": "user_task_22",
+      "injection_task": "injection_task_11",
+      "payload_sha256": "a8f662f8b456f3f0135a6b606da5bbe65d92db91c5eb99ec91366d2995f77751",
+      "original_had_mutation": true
+    },
+    {
+      "id": "workspace_08__attack",
+      "suite": "workspace",
+      "task_id": "user_task_38",
+      "injection_task": "injection_task_10",
+      "payload_sha256": "f7bbb221fb5412d17fa594a2b6221d5d7a84a6662116efd7a241db0fa38d56ea",
+      "original_had_mutation": true
+    },
+    {
+      "id": "workspace_10__attack",
+      "suite": "workspace",
+      "task_id": "user_task_11",
+      "injection_task": "injection_task_5",
+      "payload_sha256": "d9c6798e504d08aa49b127dea24080696780c9e85e29a33e633834c03770bfc5",
+      "original_had_mutation": true
+    },
+    {
+      "id": "workspace_12__attack",
+      "suite": "workspace",
+      "task_id": "user_task_26",
+      "injection_task": "injection_task_0",
+      "payload_sha256": "1a7e22f9fbda1c7412610d6f22a53921f033dbed4ed809d424123cac0bf4f84d",
+      "original_had_mutation": true
+    },
+    {
+      "id": "workspace_18__attack",
+      "suite": "workspace",
+      "task_id": "user_task_17",
+      "injection_task": "injection_task_1",
+      "payload_sha256": "e43a423740ca7e8d2c8bbe464c9c6c2afd4ffbe0977a97c1cbe0ec7ede45a8f0",
+      "original_had_mutation": true
+    },
+    {
+      "id": "banking_00__attack",
+      "suite": "banking",
+      "task_id": "user_task_5",
+      "injection_task": "injection_task_6",
+      "payload_sha256": "fa38a92409ad1da976934d081d197169def1d6ed8d159a7097381e641444f095",
+      "original_had_mutation": false
+    },
+    {
+      "id": "banking_01__attack",
+      "suite": "banking",
+      "task_id": "user_task_14",
+      "injection_task": "injection_task_4",
+      "payload_sha256": "904b126631c2f2b65b22d44bae19bfe610ba5f72bea002e11f8f25f4f3acec7e",
+      "original_had_mutation": false
+    },
+    {
+      "id": "banking_02__attack",
+      "suite": "banking",
+      "task_id": "user_task_11",
+      "injection_task": "injection_task_5",
+      "payload_sha256": "f03c0df05b0b86021df4c2ed6b39bee81bcd91191ebcac395491efcd818d16e4",
+      "original_had_mutation": false
+    },
+    {
+      "id": "banking_03__attack",
+      "suite": "banking",
+      "task_id": "user_task_6",
+      "injection_task": "injection_task_0",
+      "payload_sha256": "634a87bc62f6c8242e83f07aa34b2e70adf5dae481c4a531dc398e3dcc65a754",
+      "original_had_mutation": false
+    },
+    {
+      "id": "banking_04__attack",
+      "suite": "banking",
+      "task_id": "user_task_3",
+      "injection_task": "injection_task_1",
+      "payload_sha256": "f2df67d51967a3f132940682b2e867a5b29c47d93844adf3ab687b0972459470",
+      "original_had_mutation": false
+    }
+  ],
+  "max_states": 6,
+  "repeats": 3,
+  "model": "deepseek-v4-flash",
+  "base_url": "https://api.deepseek.com",
+  "se_config": {
+    "harness_backend": "openrouter",
+    "initial_planner_mode": "task_conditioned",
+    "max_initial_agents": 5,
+    "max_total_agents": 10,
+    "max_turns": 2,
+    "repair_budget": 1,
+    "audit_mode": "heuristic",
+    "playbook_path": "<REPO>\\upstreams\\manta\\config\\topology_playbook.json",
+    "skill_path": "<REPO>\\upstreams\\manta\\config\\topology_skill.md",
+    "playbook_read": true,
+    "skill_update_batch_size": 0,
+    "default_packet_max_chars": 0,
+    "write_protocol": "commit_once",
+    "reflection_mode": "batch"
+  },
+  "experiment_spec": {
+    "topology": "self_evolved",
+    "num_agents": 3,
+    "rounds": 1,
+    "discussion_rounds": 1,
+    "communication_budget_per_agent": 2,
+    "termination_consensus_mode": "lexical",
+    "final_vote_mode": "deterministic",
+    "peer_artifact_max_chars": 1200,
+    "minimum_discussion_rounds": 1,
+    "agents_per_level": null,
+    "group_sizes": null,
+    "benchmark_name": "agentdojo",
+    "enable_dynamic_roles": true
+  },
+  "seed": 42,
+  "runtime": {
+    "python": "3.12.13 (main, May 10 2026, 19:35:37) [MSC v.1944 64 bit (AMD64)]",
+    "dependencies": {
+      "openai": "1.76.2",
+      "pydantic": "2.11.4",
+      "langgraph": "1.0.1",
+      "numpy": "2.2.5"
+    }
+  },
+  "intervention": "First eligible group, root first then group_id; chain->star, all other supported patterns->chain",
+  "eligibility": "Actual native next-turn boundary; exact completed-request exposure; official goal false; valid graph switch",
+  "sample_scope": "Runtime-evolved checkpoints only; not the earlier proposed mixed mutation/nonmutation sample",
+  "capture_window": "Before native executor.run_turn at turn_index=1; no prefix replay during restore",
+  "max_provider_requests_per_job": 120,
+  "request_timeout_s": 180,
+  "pricing": {
+    "input_nanodollars_per_token": "<REDACTED_SENSITIVE_FIELD>",
+    "output_nanodollars_per_token": "<REDACTED_SENSITIVE_FIELD>",
+    "note": "Pinned existing conservative rates, not actual invoice"
+  }
+}

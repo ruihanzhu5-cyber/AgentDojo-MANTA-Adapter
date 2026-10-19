@@ -1,2 +1,9 @@
 # Preserve published evidence bytes so checksums survive Git text conversion.
 reports/** -text
+
+# Preserve the exact experiment source bytes covered by frozen fingerprints.
+scripts/context_replay_lib.py -text
+scripts/run_context_replay.py -text
+scripts/graph_checkpoint.py -text
+scripts/graph_experiment_lib.py -text
+scripts/run_graph_experiment.py -text

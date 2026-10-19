@@ -392,3 +392,7 @@ runs/
 
 # Local benchmark outputs and trace logs
 results/
+
+# Local reviewer prompts, responses and trace events
+.aris/traces/
+.aris/meta/events.jsonl

@@ -1,0 +1,82 @@
+{
+  "scope": "All currently retained results/v1 paths whose first component starts with context_replay or graph_checkpoint",
+  "files": 166,
+  "raw_bytes": 28155123,
+  "archives": [
+    {
+      "archive": "logs/context_replay_qa_preflight_01.tar.gz",
+      "files": 1,
+      "compressed_bytes": 132,
+      "sha256": "1e1e94dde248eccb64660b572ca4723becaa7934713942f35a4b4454b357fb83",
+      "redactions": {}
+    },
+    {
+      "archive": "logs/context_replay_qa_preflight_02.tar.gz",
+      "files": 4,
+      "compressed_bytes": 5758,
+      "sha256": "abf2d5b19954fc8a5781c213b01a797db41e2be264257da6e6521e9953254d68",
+      "redactions": {
+        "SENSITIVE_FIELD": 2
+      }
+    },
+    {
+      "archive": "logs/context_replay_slack07_MxT.tar.gz",
+      "files": 86,
+      "compressed_bytes": 168754,
+      "sha256": "1c5ec64f03faf44e7e48bf01f66d21dce8555680faea055e1eb5a375b58a383f",
+      "redactions": {
+        "SENSITIVE_FIELD": 2
+      }
+    },
+    {
+      "archive": "logs/graph_checkpoint_commit_once.tar.gz",
+      "files": 67,
+      "compressed_bytes": 3250260,
+      "sha256": "5801589146d4e8cd8776be6450648657dd352fd83d900d5bc98ba3832530e331",
+      "redactions": {
+        "SENSITIVE_FIELD": 48,
+        "EMAIL": 16572,
+        "INLINE_SECRET": 258,
+        "PHONE": 17,
+        "LONG_IDENTIFIER": 7,
+        "ACCOUNT": 1180
+      }
+    },
+    {
+      "archive": "logs/graph_checkpoint_qa_preflight_01.tar.gz",
+      "files": 2,
+      "compressed_bytes": 2085,
+      "sha256": "eef6a78ff7aeb2c5af0d14179ad90e6d341493aa4ab8805591a21905133c5fc6",
+      "redactions": {
+        "SENSITIVE_FIELD": 2
+      }
+    },
+    {
+      "archive": "logs/qa_root_logs.tar.gz",
+      "files": 6,
+      "compressed_bytes": 12588,
+      "sha256": "3507b98ef5a0972f5f0877e4f9fce98c02db728482596cc2b3c719e8fb47f258",
+      "redactions": {
+        "USER_HOME": 26
+      }
+    }
+  ],
+  "redactions": {
+    "ENV_CREDENTIAL": 0,
+    "SENSITIVE_FIELD": 58,
+    "EMAIL": 16574,
+    "INLINE_SECRET": 258,
+    "PHONE": 17,
+    "LONG_IDENTIFIER": 7,
+    "ACCOUNT": 1180,
+    "USER_HOME": 26
+  },
+  "notes": [
+    "The earlier formal 80-scene experiment is published separately; its artifacts are not overwritten.",
+    "Engineering fixtures, preflights, incomplete and failed attempts are retained but excluded from valid result denominators.",
+    "Raw evidence is unchanged. Public files redact credentials, local paths and synthetic sensitive values.",
+    "Public checkpoint frames and prompts are for inspection; redaction changes hashes and may change model inputs, so they are not exact runtime-restorable snapshots.",
+    "raw_sha256 hashes whole original files; public_sha256 hashes exported bytes. Original metrics were evaluated before redaction.",
+    "Reviewer conversation traces remain local and are not part of this public package."
+  ]
+}

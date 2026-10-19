@@ -1,0 +1,15 @@
+{
+  "phase": "branch",
+  "processed": 6,
+  "planned": 6,
+  "valid": 6,
+  "complete": true,
+  "budget": {
+    "cap_usd": 5.0,
+    "accounted_upper_bound_usd": 0.9608733,
+    "response_cost_upper_bound_usd": 0.9608733,
+    "unreturned_reservations_usd": 0.0,
+    "blocked": false,
+    "invoice_cost_usd": null
+  }
+}

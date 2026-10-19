@@ -1,0 +1,207 @@
+{
+  "protocol": "slack07-worker-context-2x2-v1",
+  "source_path": "<REPO>\\results\\v1\\formal_80_seed42\\attempts\\slack_07__attack\\attempt_001\\result.json",
+  "source_result_sha256": "1915c278002051b47c885b7588fff31fc76e3b606c8f3891fdfdfb0dac2d58ec",
+  "code_sha256": "92c30bdcb7d3c23b10063ae8a1c7c9b5ca1882b6ae2e343952fc14491bf9031d",
+  "model": "deepseek-v4-flash",
+  "base_url": "https://api.deepseek.com",
+  "jobs": [
+    {
+      "id": "agent_1_M1T1_r1",
+      "actor": "agent_1",
+      "M": 1,
+      "T": 1,
+      "repeat": 1
+    },
+    {
+      "id": "agent_2_M0T0_r1",
+      "actor": "agent_2",
+      "M": 0,
+      "T": 0,
+      "repeat": 1
+    },
+    {
+      "id": "agent_2_M1T0_r1",
+      "actor": "agent_2",
+      "M": 1,
+      "T": 0,
+      "repeat": 1
+    },
+    {
+      "id": "agent_2_M1T1_r1",
+      "actor": "agent_2",
+      "M": 1,
+      "T": 1,
+      "repeat": 1
+    },
+    {
+      "id": "agent_1_M1T0_r1",
+      "actor": "agent_1",
+      "M": 1,
+      "T": 0,
+      "repeat": 1
+    },
+    {
+      "id": "agent_2_M0T1_r1",
+      "actor": "agent_2",
+      "M": 0,
+      "T": 1,
+      "repeat": 1
+    },
+    {
+      "id": "agent_1_M0T0_r1",
+      "actor": "agent_1",
+      "M": 0,
+      "T": 0,
+      "repeat": 1
+    },
+    {
+      "id": "agent_1_M0T1_r1",
+      "actor": "agent_1",
+      "M": 0,
+      "T": 1,
+      "repeat": 1
+    },
+    {
+      "id": "agent_1_M1T1_r2",
+      "actor": "agent_1",
+      "M": 1,
+      "T": 1,
+      "repeat": 2
+    },
+    {
+      "id": "agent_2_M1T1_r2",
+      "actor": "agent_2",
+      "M": 1,
+      "T": 1,
+      "repeat": 2
+    },
+    {
+      "id": "agent_1_M1T0_r2",
+      "actor": "agent_1",
+      "M": 1,
+      "T": 0,
+      "repeat": 2
+    },
+    {
+      "id": "agent_1_M0T0_r2",
+      "actor": "agent_1",
+      "M": 0,
+      "T": 0,
+      "repeat": 2
+    },
+    {
+      "id": "agent_2_M0T0_r2",
+      "actor": "agent_2",
+      "M": 0,
+      "T": 0,
+      "repeat": 2
+    },
+    {
+      "id": "agent_2_M1T0_r2",
+      "actor": "agent_2",
+      "M": 1,
+      "T": 0,
+      "repeat": 2
+    },
+    {
+      "id": "agent_2_M0T1_r2",
+      "actor": "agent_2",
+      "M": 0,
+      "T": 1,
+      "repeat": 2
+    },
+    {
+      "id": "agent_1_M0T1_r2",
+      "actor": "agent_1",
+      "M": 0,
+      "T": 1,
+      "repeat": 2
+    },
+    {
+      "id": "agent_1_M1T1_r3",
+      "actor": "agent_1",
+      "M": 1,
+      "T": 1,
+      "repeat": 3
+    },
+    {
+      "id": "agent_2_M0T1_r3",
+      "actor": "agent_2",
+      "M": 0,
+      "T": 1,
+      "repeat": 3
+    },
+    {
+      "id": "agent_1_M1T0_r3",
+      "actor": "agent_1",
+      "M": 1,
+      "T": 0,
+      "repeat": 3
+    },
+    {
+      "id": "agent_2_M0T0_r3",
+      "actor": "agent_2",
+      "M": 0,
+      "T": 0,
+      "repeat": 3
+    },
+    {
+      "id": "agent_1_M0T1_r3",
+      "actor": "agent_1",
+      "M": 0,
+      "T": 1,
+      "repeat": 3
+    },
+    {
+      "id": "agent_2_M1T0_r3",
+      "actor": "agent_2",
+      "M": 1,
+      "T": 0,
+      "repeat": 3
+    },
+    {
+      "id": "agent_2_M1T1_r3",
+      "actor": "agent_2",
+      "M": 1,
+      "T": 1,
+      "repeat": 3
+    },
+    {
+      "id": "agent_1_M0T0_r3",
+      "actor": "agent_1",
+      "M": 0,
+      "T": 0,
+      "repeat": 3
+    }
+  ],
+  "fixture_sha256": {
+    "agent_1": "74e4b9e078db9dbd52a3aa243807c71be28cbf4179a6f418b0fcb43e62033673",
+    "agent_2": "2aef3ddb1590ba71d3d9347a8ae8d676444219c397baef44df21b540dc5d50f2"
+  },
+  "temperature": 0.0,
+  "max_tool_iterations": 8,
+  "max_provider_requests_per_worker": 36,
+  "output_tokens_per_request": 4096,
+  "request_timeout_s": 180,
+  "repetitions": 3,
+  "ordering_seed": 42,
+  "endpoint_seed_supported": false,
+  "runtime": {
+    "python": "3.12.13 (main, May 10 2026, 19:35:37) [MSC v.1944 64 bit (AMD64)]",
+    "dependencies": {
+      "openai": "1.76.2",
+      "pydantic": "2.11.4",
+      "langgraph": "1.0.1",
+      "python-dotenv": "1.1.0"
+    }
+  },
+  "runtime_env_policy": "Remove inherited MAS_/MANTA_/OPENROUTER_ overrides; use native defaults",
+  "pricing": {
+    "input_nanodollars_per_token": "<REDACTED_SENSITIVE_FIELD>",
+    "output_nanodollars_per_token": "<REDACTED_SENSITIVE_FIELD>",
+    "max_input_reservation_tokens": 1048576,
+    "source": "Existing budget.py conservative rates pinned 2026-10-18; not invoice cost"
+  },
+  "scope": "Local worker replays; no topology intervention or full-run checkpoint claim"
+}
