@@ -80,17 +80,32 @@ def freeze_plan(model):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--parallelism", type=int, default=8)
-    parser.add_argument("--run-dir", type=Path, default=ROOT / "results" / "v1" / "formal_80_seed42")
+    parser.add_argument("--parallelism", type=int, default=None)
+    parser.add_argument("--run-dir", type=Path, default=None)
+    parser.add_argument("--provider", choices=["deepseek", "openai", "qdd"], default=None)
+    parser.add_argument("--pilot", action="store_true", help="Four frozen scenes, clean/attack pairs; real API, $10 cap")
+    parser.add_argument("--pilot-dir", type=Path, default=ROOT / "results/v1/pilot_4_seed42_gpt4o")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--limit", type=int, help="Smoke-only episode limit")
     parser.add_argument("--max-attempts", type=int, default=2)
     args = parser.parse_args()
+    if args.parallelism is None:
+        args.parallelism = 1 if args.pilot else 8
+    if args.pilot and args.parallelism > 2:
+        parser.error("Initial GPT-4o pilot parallelism must be 1 or 2")
     from dotenv import load_dotenv
     load_dotenv(ROOT / ".env", override=False)
+    if args.provider:
+        os.environ["MANTA_PROVIDER"] = args.provider
+    provider = os.getenv("MANTA_PROVIDER", "deepseek")
+    gpt4o = provider != "deepseek"
+    if args.pilot and (not gpt4o or args.smoke):
+        parser.error("--pilot requires a real GPT-4o provider; mock pilot is forbidden")
+    if args.run_dir is None:
+        args.run_dir = (args.pilot_dir if args.pilot else ROOT / "results/v1/formal_80_seed42_gpt4o") if gpt4o else ROOT / "results/v1/formal_80_seed42"
     from agentdojo_manta.adapter import AdapterPaths, _import_manta
-    from agentdojo_manta.budget import RequestBudget
+    from agentdojo_manta.budget import RequestBudget, GPT4oBudget
     from agentdojo_manta.metrics import summarize
     if not 1 <= args.parallelism <= 8 or args.max_attempts < 1:
         parser.error("parallelism must be 1..8; max-attempts must be positive")
@@ -99,13 +114,31 @@ def main():
     if args.smoke and args.run_dir.resolve() == (ROOT / "results" / "v1" / "formal_80_seed42").resolve():
         parser.error("Smoke requires a separate --run-dir")
     _import_manta(AdapterPaths.from_repo(ROOT))
-    manifest = freeze_plan(os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash"))
+    if gpt4o:
+        from agentdojo_manta.providers import provider_config
+        from agentdojo_manta.replication import load_replication_plan
+        binding = provider_config("gpt-4o")
+        # The published baseline contains no environment overrides. Prevent accidental
+        # inherited settings from changing its engine, sampling, tool memory or roles.
+        forbidden = [k for k in os.environ if k.startswith(("MAS_", "MANTA_", "OPENROUTER_")) and k != "MANTA_PROVIDER"]
+        if forbidden:
+            parser.error(f"Remove unverified inherited runtime overrides: {', '.join(sorted(forbidden))}")
+        manifest = load_replication_plan(ROOT, provider=provider, source_digest=fingerprint(), pilot=args.pilot)
+        manifest["pricing_multiplier"] = os.getenv("GPT4O_PRICE_MULTIPLIER", "1")
+        if provider == "qdd" and os.getenv("GPT4O_PRICING_EVIDENCE"):
+            manifest["pricing_evidence_sha256"] = hashlib.sha256(Path(os.environ["GPT4O_PRICING_EVIDENCE"]).read_bytes()).hexdigest()
+    else:
+        manifest = freeze_plan(os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash"))
     manifest["mock"] = args.smoke
     if args.limit:
         jobs = manifest["jobs"]
         manifest["jobs"] = [jobs[offset + index] for index in range(40)
                             for offset in range(0, 160, 40)][:args.limit]
     run_dir = args.run_dir.resolve()
+    if gpt4o and run_dir == (ROOT / "results/v1/formal_80_seed42").resolve():
+        parser.error("GPT-4o must never write to the original DeepSeek result directory")
+    if gpt4o and args.smoke and run_dir in {(ROOT / "results/v1/formal_80_seed42_gpt4o").resolve(), args.pilot_dir.resolve()}:
+        parser.error("Mock smoke requires its own result directory")
     run_dir.mkdir(parents=True, exist_ok=True)
     # Cross-process launch lock. Windows releases the byte lock on process exit.
     lockfile = (run_dir / "launch.lock").open("a+b")
@@ -132,7 +165,7 @@ def main():
     else:
         write_json(manifest_path, manifest)
     print(f"RUN_DIR={run_dir}", flush=True)
-    print(f"Frozen: 80 attack scenarios, {manifest['unique_user_tasks']} unique user tasks, "
+    print(f"Frozen: {len(manifest['scenes'])} attack scenarios, {manifest['unique_user_tasks']} original unique user tasks, "
           f"{len(manifest['jobs'])} paired episodes; parallelism={args.parallelism}.", flush=True)
     if args.dry_run:
         print("PRECHECK_OK: frozen queue saved; zero API requests.", flush=True)
@@ -146,19 +179,35 @@ def main():
                 parser.error(f"Previous child PID {pid} is still alive; do not resume concurrently")
     budget = None
     if not args.smoke:
-        if not os.getenv("DEEPSEEK_API_KEY"):
+        if gpt4o:
+            if not binding.api_key:
+                parser.error("OPENAI_API_KEY missing")
+            if args.pilot:
+                os.environ["GPT4O_MAX_COST_USD"] = "10"
+            else:
+                if not os.getenv("GPT4O_MAX_COST_USD"):
+                    parser.error("Explicit cumulative GPT4O_MAX_COST_USD required before formal launch")
+                acceptance_path = args.pilot_dir / "pilot_acceptance.json"
+                if not acceptance_path.exists():
+                    parser.error("An accepted real GPT-4o pilot is required")
+                acceptance = json.loads(acceptance_path.read_text(encoding="utf-8"))
+                if not acceptance.get("accepted") or any(acceptance.get(k) != manifest.get(k) for k in ("source_sha256", "provider", "original_manifest_sha256")):
+                    parser.error("Pilot acceptance failed or source/provider/scenes have changed")
+            budget = GPT4oBudget(run_dir / "budget.sqlite", os.environ["GPT4O_MAX_COST_USD"])
+        elif not os.getenv("DEEPSEEK_API_KEY"):
             parser.error("DEEPSEEK_API_KEY missing; existing environment/.env is reused")
-        if not os.getenv("V1_MAX_COST_USD"):
+        if not gpt4o and not os.getenv("V1_MAX_COST_USD"):
             parser.error("Task book requires explicit V1_MAX_COST_USD before the paid formal run")
-        if any(model not in RequestBudget.MODELS for model in
+        if not gpt4o and any(model not in RequestBudget.MODELS for model in
                (manifest["config"]["model"], manifest["planner_model"], manifest["auditor_model"])):
             parser.error("Verified monetary guard supports the DeepSeek Flash model family only")
-        budget = RequestBudget(run_dir / "budget.sqlite", os.environ["V1_MAX_COST_USD"])
+        if not gpt4o:
+            budget = RequestBudget(run_dir / "budget.sqlite", os.environ["V1_MAX_COST_USD"])
         with budget.connect() as db:
             # Previous launcher may have lost a response. Retain the reservation.
             db.execute("UPDATE requests SET state='uncertain' WHERE state='pending'")
             db.execute("UPDATE settings SET value='0' WHERE key='blocked'")
-        print(f"Budget cap ${os.environ['V1_MAX_COST_USD']}; peak-price upper-bound accounting.", flush=True)
+        print(f"Budget cap ${budget.snapshot()['cap_usd']}; conservative request accounting.", flush=True)
     active, active_lock, stop = set(), threading.Lock(), threading.Event()
 
     def run_one(job):
@@ -198,7 +247,12 @@ def main():
             env.update(MANTA_MAX_INITIAL_AGENTS="5", MANTA_MAX_TOTAL_AGENTS="10",
                        V1_LLM_TIMEOUT_S="180", PYTHONIOENCODING="utf-8")
             if budget:
-                env["V1_BUDGET_DB"] = budget.path
+                if gpt4o:
+                    env["GPT4O_BUDGET_DB"] = budget.path
+                    env["GPT4O_REQUEST_JOURNAL"] = str(attempt / "requests.jsonl")
+                    env.pop("V1_BUDGET_DB", None)
+                else:
+                    env["V1_BUDGET_DB"] = budget.path
             else:
                 env.pop("V1_BUDGET_DB", None)
             with (attempt / "console.log").open("w", encoding="utf-8") as console:
@@ -224,6 +278,8 @@ def main():
             row["queue_run_id"] = job["run_id"]
             row["scene_id"] = job["scene_id"]
             write_json(attempt / "queue_result.json", row)
+            if gpt4o and any(r.get("http_status") in (400, 401, 403, 404) or r.get("error_type") == "ValueError" for r in row.get("llm_requests", [])):
+                stop.set()
             if row.get("evaluation_valid") is True or args.smoke or row.get("run_status") == "BLOCKED":
                 break
         return row
@@ -262,6 +318,11 @@ def main():
                              for s in ("workspace", "travel", "banking", "slack")},
                    budget=budget.snapshot() if budget else None)
     write_json(run_dir / "summary.json", summary)
+    if gpt4o and args.pilot and not args.smoke:
+        from agentdojo_manta.replication import check_pilot
+        acceptance = check_pilot(run_dir, manifest, summary["budget"])
+        write_json(run_dir / "pilot_acceptance.json", acceptance)
+        print(f"PILOT_ACCEPTED={acceptance['accepted']}", flush=True)
     print(f"{'COMPLETE' if complete else 'INCOMPLETE'}: {run_dir / 'summary.json'}", flush=True)
     smoke_ok = args.smoke and len(rows) == len(manifest["jobs"]) and all(
         r.get("mock_used") is True and r.get("process_returncode") == 0 for r in rows)

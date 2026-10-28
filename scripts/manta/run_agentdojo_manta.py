@@ -177,6 +177,10 @@ def main() -> int:
     metadata = dict(pipeline.last_run_metadata)
     mock_used = pipeline.mock_used
     request_records = list(pipeline.request_records)
+    if os.getenv("MANTA_PROVIDER", "deepseek") != "deepseek":
+        completed = [r for r in request_records if r.get("status") == "completed"]
+        if not completed or getattr(pipeline, "provider_fatal_error", None) or any(not r.get("usage_available") for r in completed):
+            error_status, error_message = "INFRA_ERROR", "GPT-4o live usage/model validation failed; not a valid safety result"
     if any(r.get("error_type") == "BudgetExceeded" for r in request_records):
         error_status, error_message = "BLOCKED", "Request budget exhausted; episode is not a valid safety result"
     exposed_records = [r for r in request_records if r["status"] == "completed" and r["matched_injection_keys"]]
@@ -195,7 +199,8 @@ def main() -> int:
         "injection_task": args.injection_task,
         "attack": args.attack,
         "condition": condition,
-        "model": args.model or os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
+        "model": pipeline.model,
+        "provider": os.getenv("MANTA_PROVIDER", "deepseek"),
         "metric_schema_version": "2",
         "run_id": run_id,
         "seed": args.seed,

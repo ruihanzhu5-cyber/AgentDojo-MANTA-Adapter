@@ -14,6 +14,7 @@ import sys
 import types
 import threading
 import time
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -85,9 +86,12 @@ def _import_manta(paths: AdapterPaths):
 def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=None):
     OpenRouterConfig, _SelfEvolvedConfig, OpenRouterLLMClient, _ExperimentSpec, _Engine = _import_manta(paths)
 
-    api_key = os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_COMPATIBLE_API_KEY")
-    base_url = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
-    model_name = model or os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+    from agentdojo_manta.providers import provider_config, gpt4o_sampling, validate_gpt4o_response
+    provider = provider_config(model)
+    api_key, base_url, model_name = provider.api_key, provider.base_url, provider.model
+    is_gpt4o = provider.name != "deepseek"
+    if is_gpt4o and os.getenv("MAS_DISABLE_LIVE_LLM") != "1" and not api_key:
+        raise ValueError("OPENAI_API_KEY is missing")
 
     config = OpenRouterConfig(
         api_key=api_key,
@@ -97,15 +101,15 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
     models = {
         "default": model_name,
         "general": model_name,
-        "planner": os.getenv("DEEPSEEK_PLANNER_MODEL", model_name),
-        "auditor": os.getenv("DEEPSEEK_AUDITOR_MODEL", model_name),
+        "planner": provider.planner_model,
+        "auditor": provider.auditor_model,
     }
     client = OpenRouterLLMClient(config, models)
     from agentdojo_manta.budget import configured_budget
     budget = configured_budget()
     if budget is not None:
         from urllib.parse import urlparse
-        if urlparse(base_url).hostname != "api.deepseek.com":
+        if not is_gpt4o and urlparse(base_url).hostname != "api.deepseek.com":
             raise ValueError("Verified budget prices require api.deepseek.com")
         # MANTA's own retries remain observed; eliminate hidden SDK retries.
         if client.client is not None:
@@ -115,7 +119,18 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
     # DeepSeek's endpoint is OpenAI-compatible but does not need that routing
     # payload.  Disable only the provider wrapper; MANTA's tool loop and accounting
     # remain unchanged.
-    client._apply_openrouter_routing_overrides = lambda kwargs, retry_index=0: dict(kwargs)  # type: ignore[attr-defined]
+    actor_context = threading.local()
+
+    def routing(kwargs, retry_index=0):
+        actor_context.retry_index = retry_index
+        return dict(kwargs)
+
+    client._apply_openrouter_routing_overrides = routing
+    if is_gpt4o:
+        client._apply_openrouter_sampling_overrides = gpt4o_sampling
+        if observer is None and os.getenv("MAS_DISABLE_LIVE_LLM") != "1":
+            raise ValueError("Live GPT-4o requests require the execution observer")
+        client.require_live = os.getenv("MAS_DISABLE_LIVE_LLM") != "1"
 
     # DeepSeek's OpenAI-compatible endpoint is stricter than OpenRouter about
     # parallel tool calls.  MANTA's tool-loop already serializes handler
@@ -133,10 +148,20 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
     if observer is not None:
         original_once = client._create_chat_completion_once
         original_generate = client.generate
-        actor_context = threading.local()
+        journal_path = os.getenv("GPT4O_REQUEST_JOURNAL") if is_gpt4o else None
+
+        def journal(record, **extra):
+            if journal_path:
+                with observer._metrics_lock:
+                    with Path(journal_path).open("a", encoding="utf-8") as stream:
+                        stream.write(json.dumps({**record, **extra}, ensure_ascii=False) + "\n")
+                        stream.flush()
+                        os.fsync(stream.fileno())
 
         def observed_generate(**kwargs):
             actor_context.agent_id = kwargs.get("agent_id")
+            actor_context.agent_type = kwargs.get("agent_type")
+            actor_context.generation_id = uuid.uuid4().hex
             try:
                 result = original_generate(**kwargs)
                 with observer._metrics_lock:
@@ -162,26 +187,43 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
             record = {"agent_id": getattr(actor_context, "agent_id", None),
                       "model": kwargs.get("model"), "status": "error",
                       "matched_injection_keys": matches, "usage_available": False}
+            record.update(request_id=uuid.uuid4().hex, provider=provider.name, endpoint=base_url,
+                          agent_type=getattr(actor_context, "agent_type", None),
+                          generation_id=getattr(actor_context, "generation_id", None),
+                          retry_index=getattr(actor_context, "retry_index", 0))
             start = time.perf_counter()
             reservation = None
             try:
+                if is_gpt4o and getattr(observer, "provider_fatal_error", None):
+                    raise RuntimeError(observer.provider_fatal_error)
                 if budget is not None:
                     reservation = budget.reserve(kwargs.get("model"), int(kwargs["max_tokens"]))
                     record["budget_request_id"] = reservation
+                journal(record, status="pending", messages=kwargs.get("messages"), tools=kwargs.get("tools"),
+                        max_tokens=kwargs.get("max_tokens"), parallel_tool_calls=kwargs.get("parallel_tool_calls"))
                 response = original_once(**kwargs)
                 usage = getattr(response, "usage", None)
                 record["provider_model"] = getattr(response, "model", None)
+                record["provider_response_id"] = getattr(response, "id", None)
+                record["raw_usage"] = usage.model_dump() if hasattr(usage, "model_dump") else None
+                if is_gpt4o:
+                    validate_gpt4o_response(response)
                 if budget is not None:
                     record["cost_upper_bound_usd"] = budget.settle(reservation, usage)
                 record.update(status="completed", usage_available=usage is not None,
                               token_in=getattr(usage, "prompt_tokens", None),
                               token_out=getattr(usage, "completion_tokens", None))
+                journal(record, response=response.model_dump() if hasattr(response, "model_dump") else None)
                 return response
             except Exception as exc:
                 if budget is not None and reservation is not None:
                     budget.uncertain(reservation)
                 record["error_type"] = type(exc).__name__
                 record["http_status"] = getattr(exc, "status_code", None)
+                record["status"] = "error"
+                if is_gpt4o and (record["http_status"] in (400, 401, 403, 404) or isinstance(exc, ValueError)):
+                    observer.provider_fatal_error = f"GPT-4o provider validation failed: {type(exc).__name__}"
+                journal(record)
                 raise
             finally:
                 record["latency_s"] = time.perf_counter() - start
@@ -328,7 +370,8 @@ class MantaAgentDojoPipeline(BasePipelineElement):
     ) -> None:
         _OpenRouterConfig, SelfEvolvedConfig, _Client, ExperimentSpec, SelfEvolvedEngine = _import_manta(paths)
         self.paths = paths
-        self.model = model or os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+        from agentdojo_manta.providers import provider_config
+        self.model = provider_config(model).model
         self.num_agents = int(num_agents)
         self._metrics_lock = threading.Lock()
         self.request_records: list[dict[str, Any]] = []
