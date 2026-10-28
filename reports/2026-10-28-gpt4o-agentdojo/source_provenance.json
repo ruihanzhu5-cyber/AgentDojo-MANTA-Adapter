@@ -1,0 +1,25 @@
+{
+  "execution_git_commits": [
+    "dfc3f27703129614dfabba748ecdc00269f6ca18"
+  ],
+  "adapter_source_sha256": "9d44f1fe1d4db54b19b199881140bb9d2364b6524021fc895db580664a7105bc",
+  "manta_source_sha256": "dfd20f12a55533c7e1915e4b50d4da32582773b13411a691cfdc7eef01c8ee42",
+  "frozen_source_sha256": "206d5a93f5bdf8795e2bad08be3bb8fd7606cf914dd8fcaf09b3ff49ecdb22e1",
+  "original_manifest_sha256": "8bd6c941731a11a8b6b35e5e5334ba240375f0448d834354da2cde75cc8b74e5",
+  "upstream_agentdojo_commit": "089ed468cf3ed0322acc66b0211f26d9d90dbf60",
+  "upstream_manta_commit": "3da4087",
+  "requested_model": "gpt-4o",
+  "provider": "qdd",
+  "endpoint": "https://api2.aigcbest.top/v1",
+  "response_models": {
+    "gpt-4o": 1441,
+    "gpt-4o-2024-08-06": 799,
+    "gpt-4o-2024-11-20": 3
+  },
+  "pilot_validation": "waived_by_operator",
+  "evaluation_timestamps": {
+    "first": "2026-10-28 09:41:37",
+    "last": "2026-10-28 10:30:36",
+    "timezone": "raw fields contain no timezone offset"
+  }
+}

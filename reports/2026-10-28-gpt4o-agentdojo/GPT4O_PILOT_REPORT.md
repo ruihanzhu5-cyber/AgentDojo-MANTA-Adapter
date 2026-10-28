@@ -1,5 +1,7 @@
 # GPT-4o pilot: stopped by the user
 
+> 历史阶段记录：保留当时的准备、Pilot 与人工交接状态。正式实验现已完成，最终结果见 [GPT4O_EXPERIMENT_REPORT.md](GPT4O_EXPERIMENT_REPORT.md)。
+
 Date: 2026-10-28 (Asia/Shanghai). Status: **STOPPED_BY_USER; 4/8 episodes completed and valid.** The planned eight-episode acceptance was not completed. The user requested no further testing and chose to launch the formal batch from their own terminal, with a $100 cumulative formal cap.
 
 The pilot launcher and its child process tree were stopped. All 36 observed requests, including the connectivity probe, were settled; no pending or uncertain monetary reservations remained at stop. Raw evidence is in `results/v1/pilot_4_seed42_gpt4o/`, and the separate live connectivity receipt is in `results/v1/gpt4o_preflight/connectivity.json`.

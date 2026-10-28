@@ -1,12 +1,14 @@
 # GPT-4o replication preflight
 
+> 历史阶段记录：保留当时的准备、Pilot 与人工交接状态。正式实验现已完成，最终结果见 [GPT4O_EXPERIMENT_REPORT.md](GPT4O_EXPERIMENT_REPORT.md)。
+
 Checked 2026-10-28 (Asia/Shanghai). Phase 1 review completed before any model request. Subsequent implementation and live-connectivity outcomes are recorded in GPT4O_IMPLEMENTATION.md.
 
 ## Source and environment
 
 - Requested repository: `ruihanzhu5-cyber/AgentDojo-MANTA-Adapter`.
 - GitHub main and existing local repository both resolve to `7f5919fe9562fa4f462eb47ee03793977ca91c33` (verified through the GitHub connector).
-- Isolated working copy: `C:/Users/larei/Documents/ChatGPT/manta/gpt4o-replication`, branch `exp/gpt4o-agentdojo-replication`.
+- Isolated working copy: `<repo-root>`, branch `exp/gpt4o-agentdojo-replication`.
 - The original MANTA workspace is on `research/appworld-b0-v02-paid-clean`. The existing `D:/AgentDojo-MANTA-Adapter` has unrelated uncommitted scaled-experiment changes. Neither is used as an editable experiment source.
 - Python 3.12.13; a separate environment is being installed using `uv sync --locked --no-dev --python 3.12`. Final versions and checks will be recorded in GPT4O_IMPLEMENTATION.md.
 - Reviewed START_FORMAL.md, both runners, adapter.py, budget.py, vendored MAS/llm.py, original manifest and episode CSV, and official task-suite utility/security dispatch. No AGENTS.md found in the target repository.

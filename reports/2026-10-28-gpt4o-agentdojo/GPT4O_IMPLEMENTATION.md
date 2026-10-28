@@ -1,5 +1,7 @@
 # GPT-4o replication implementation
 
+> 历史阶段记录：保留当时的准备、Pilot 与人工交接状态。正式实验现已完成，最终结果见 [GPT4O_EXPERIMENT_REPORT.md](GPT4O_EXPERIMENT_REPORT.md)。
+
 Date: 2026-10-28 (Asia/Shanghai). Branch: `exp/gpt4o-agentdojo-replication`.
 
 ## Changes

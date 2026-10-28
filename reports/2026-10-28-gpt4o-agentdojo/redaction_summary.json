@@ -1,0 +1,70 @@
+{
+  "scope": "all retained GPT-4o formal, pilot and preflight logs",
+  "archives": [
+    {
+      "archive": "logs/formal-banking.tar.gz",
+      "files": 200,
+      "compressed_bytes": 3226967,
+      "raw_bytes": 32356520,
+      "sha256": "c749a513ed8211765b84e7d6f8d0541d117ddec51dad4327f122d5d112bdb6b9"
+    },
+    {
+      "archive": "logs/formal-control-and-resume.tar.gz",
+      "files": 8,
+      "compressed_bytes": 143184,
+      "raw_bytes": 348502,
+      "sha256": "93f2edeca028e4a1fdc3ab1849efc7cce625f25c4bda1942858480fb63ae60a2"
+    },
+    {
+      "archive": "logs/formal-slack.tar.gz",
+      "files": 200,
+      "compressed_bytes": 3045344,
+      "raw_bytes": 32838014,
+      "sha256": "de3b4aa266bc78dea697b3d1e928426b02c59f2f254d73ae9943b061cb27be29"
+    },
+    {
+      "archive": "logs/formal-travel.tar.gz",
+      "files": 288,
+      "compressed_bytes": 10138046,
+      "raw_bytes": 82305234,
+      "sha256": "14b2a021b415eeed75855723579af8b6670ab40afa7708f734eaa74006a9e67a"
+    },
+    {
+      "archive": "logs/formal-workspace.tar.gz",
+      "files": 200,
+      "compressed_bytes": 6029020,
+      "raw_bytes": 53987520,
+      "sha256": "2d27df22c1b80c5fca026d245a9fcd63abd3157c8f4ff0bd78e5908b6c4c09a1"
+    },
+    {
+      "archive": "logs/pilot.tar.gz",
+      "files": 29,
+      "compressed_bytes": 264035,
+      "raw_bytes": 2572418,
+      "sha256": "aea4754dd7fe1fa4c711cfa93875fbea1d6626e0adbfecc53f6253b9776148c5"
+    },
+    {
+      "archive": "logs/preflight.tar.gz",
+      "files": 8,
+      "compressed_bytes": 3733,
+      "raw_bytes": 11242,
+      "sha256": "ceed13f519e6d008031572879a7e083ceeb5f4053585a0f28ca74e538374027f"
+    }
+  ],
+  "replacements": {
+    "ENV_CREDENTIAL": 0,
+    "EMAIL": 26068,
+    "PHONE": 74,
+    "ACCOUNT": 18396,
+    "SENSITIVE_FIELD": 273,
+    "INLINE_SECRET": 517,
+    "LONG_IDENTIFIER": 403
+  },
+  "raw_files_untouched": true,
+  "notes": [
+    "Credentials and local user homes are removed; synthetic account/contact/secret values are pseudonymized.",
+    "Scores, exposure and correlations are computed on originals before redaction.",
+    "Redacted logs support inspection but cannot reproduce byte-exact judging.",
+    "Failed attempts and pilot logs are retained and excluded from the 160 formal selected episodes."
+  ]
+}

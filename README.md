@@ -1,3 +1,26 @@
+# MANTA × AgentDojo Adapter
+
+将 MANTA SelfEvolvedEngine 接入 AgentDojo 官方任务、工具、direct 攻击和 utility/security 评分。本仓库保留官方 AgentDojo 与固定 MANTA 快照，适配层位于 `src/agentdojo_manta/`。
+
+| 已完成正式实验 | Clean Utility | Attack Utility | Targeted ASR | 确认暴露 |
+|---|---:|---:|---:|---:|
+| DeepSeek：80 场景 / 160 episode | 65/80（81.25%） | 66/80（82.50%） | 1/80（1.25%） | 74/80 |
+| GPT-4o：相同场景 / 160 episode | 43/80（53.75%） | 44/80（55.00%） | 1/80（1.25%） | 61/80 |
+
+- **[整个仓库架构](docs/REPOSITORY_ARCHITECTURE.md)** · **[GPT-4o 适配层](docs/manta/GPT4O_ADAPTER.md)**
+- **[GPT-4o 正式报告与配对比较](reports/2026-10-28-gpt4o-agentdojo/README.md)** · [160 行模型对照 CSV](reports/2026-10-28-gpt4o-agentdojo/model_comparison.csv)
+- **[全部实验报告](reports/README.md)** · **[全部公开日志包](reports/LOGS.md)**
+
+每轮正式统计仅选取冻结 job 的唯一有效结果。API 余额不足、进程中断、Pilot 和 mock 均单独保留，不作为攻击失败。原始日志在本机忽略的 `results/v1/`，GitHub 只发布脱敏包和校验清单。单 seed、重复 Banking 任务与有限攻击覆盖限制了结论的外推。
+
+## 本地入口
+
+运行环境使用 `uv sync --locked --no-dev --python 3.12`。复制 `.env.example` 为 `.env` 后填写自己的凭证；不要上传 `.env`。配置和启动说明见 [适配层文档](docs/manta/GPT4O_ADAPTER.md)。报告导出为离线操作，不发送模型请求。
+
+下方保留上游 AgentDojo 的介绍、安装与引用信息。
+
+---
+
 <center>
 
 # AgentDojo: A Dynamic Environment to Evaluate Prompt Injection Attacks and Defenses for LLM Agents

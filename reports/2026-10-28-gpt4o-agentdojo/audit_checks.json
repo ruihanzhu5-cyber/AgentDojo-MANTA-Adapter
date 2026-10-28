@@ -1,0 +1,46 @@
+{
+  "type": "offline_mechanical_consistency_not_independent_cross_model_audit",
+  "valid_episodes": 160,
+  "unique_valid_attempts": 160,
+  "formal_attempt_directories": 182,
+  "result_json_present": 175,
+  "official_trace_matches": 160,
+  "selected_usage_checks": 160,
+  "source_digest_matches": 160,
+  "frozen_scene_and_payload_hash_matches": 80,
+  "original_scene_and_job_identity": true,
+  "summary_and_suites_recomputed": true,
+  "selected_mock_count": 0,
+  "budget_integrity": "ok",
+  "pricing_identity": "qdd:gpt-4o:2500:10000:128000",
+  "ledger_request_states": {
+    "settled": 2449,
+    "uncertain": 25
+  },
+  "completed_journal_requests_reconciled": 2449,
+  "request_errors_in_result_files": [
+    {
+      "type": "PermissionDeniedError",
+      "http_status": 403,
+      "count": 15
+    },
+    {
+      "type": "APIConnectionError",
+      "http_status": null,
+      "count": 3
+    }
+  ],
+  "request_errors_in_durable_journals": [
+    {
+      "type": "PermissionDeniedError",
+      "http_status": 403,
+      "count": 15
+    },
+    {
+      "type": "APIConnectionError",
+      "http_status": null,
+      "count": 3
+    }
+  ],
+  "journal_parse_errors": []
+}

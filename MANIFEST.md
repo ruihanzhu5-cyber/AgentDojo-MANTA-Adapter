@@ -2,6 +2,8 @@
 
 > Tracks generated research planning artifacts. Existing experiment reports remain in their original publication directory.
 
+2026-10-28 更新：GPT-4o 跨模型复现已完成，报告、160 行配对表、三个轨迹案例和 933 个留存文件的脱敏日志归档见 [交付目录](reports/2026-10-28-gpt4o-agentdojo/README.md)。[全部实验](reports/README.md) / [全部日志](reports/LOGS.md) / [仓库架构](docs/REPOSITORY_ARCHITECTURE.md)。阶段性的 GPT4O_PREFLIGHT / IMPLEMENTATION / PILOT_REPORT 已集中到该交付目录；原始数据保持原位。
+
 | Timestamp | Skill | File | Stage | Description |
 |-----------|-------|------|-------|-------------|
 | 2026-10-19 13:13:20 +08:00 | /experiment-plan | refine-logs/EXPERIMENT_PLAN_20261019_131320.md | implementation | Context 传播机制分阶段实验计划；未启动 API 运行 |

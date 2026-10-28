@@ -1,5 +1,7 @@
 # AgentDojo × MANTA V1
 
+**最新入口：** [仓库架构](../REPOSITORY_ARCHITECTURE.md) · [GPT-4o 适配层](GPT4O_ADAPTER.md) · [全部实验](../../reports/README.md) · [日志总索引](../../reports/LOGS.md)。2026-10-28 的 GPT-4o 复现已完成 160/160 有效 episode，报告与模型对照见 [本轮交付](../../reports/2026-10-28-gpt4o-agentdojo/README.md)。
+
 This repository is a standalone experiment checkout based on the official
 [AgentDojo](https://github.com/ethz-spylab/agentdojo) source. The adapter keeps
 AgentDojo responsible for task suites, tool execution, attack injection, and the
