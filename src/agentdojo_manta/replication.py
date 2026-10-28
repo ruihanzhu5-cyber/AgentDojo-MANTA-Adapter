@@ -36,7 +36,7 @@ def load_replication_plan(root: Path, *, provider: str, source_digest: str, pilo
     if jobs != expected_jobs:
         raise ValueError("Original job scene/task/injection/payload pairing differs")
     plan = copy.deepcopy(original)
-    if model not in {"gpt-4o", "deepseek-v4-pro"} or (model == "deepseek-v4-pro" and provider != "deepseek"):
+    if model not in {"gpt-4o", "deepseek-v4-pro", "deepseek-flash"} or (model.startswith("deepseek") and provider != "deepseek"):
         raise ValueError("Unsupported model/provider replication pair")
     plan.update(provider=provider, endpoint={"qdd": "https://api2.aigcbest.top/v1", "openai": "https://api.openai.com/v1", "deepseek": "https://api.deepseek.com/v1"}[provider],
                 original_manifest_sha256=hashlib.sha256(source.read_bytes()).hexdigest(),
@@ -45,9 +45,9 @@ def load_replication_plan(root: Path, *, provider: str, source_digest: str, pilo
                 pricing_source="https://api2.aigcbest.top/api/pricing" if provider == "qdd" else "https://developers.openai.com/api/docs/models/gpt-4o",
                 budget_accounting="GPT-4o independent rates; uncached upper bound; unresolved requests retain full reservation")
     plan["config"]["model"] = model
-    if model == "deepseek-v4-pro":
+    if model.startswith("deepseek"):
         plan.update(pricing_source="https://api-docs.deepseek.com/quick_start/pricing/",
-                    budget_accounting="Pro peak uncached rates; full-context reservations; not invoice cost",
+                    budget_accounting="Selected DeepSeek model peak uncached rates; full-context reservations; not invoice cost",
                     thinking="enabled (provider default); actual reasoning_content preserved on retained tool turns")
     if pilot:
         ids = {next(s["scene_id"] for s in scenes if s["suite"] == suite) for suite in sorted(suites)}

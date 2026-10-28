@@ -49,3 +49,15 @@ def validate_pro_response(response):
     values = [getattr(usage, k, None) for k in ("prompt_tokens", "completion_tokens", "total_tokens")]
     if any(type(v) is not int or v < 0 for v in values) or values[2] != values[0] + values[1]:
         raise ValueError("DeepSeek Pro usage missing or inconsistent")
+
+
+def validate_flash_response(response):
+    """Validate the explicitly selected Flash route without silently accepting Pro."""
+    if response.model not in {
+        "deepseek-flash", "deepseek-v4-flash", "deepseek-v4-flash-vision-exp",
+        "deepseek-v4.1-flash", "deepseek-v4.1-flash-1017",
+    }:
+        raise ValueError(f"Unexpected DeepSeek Flash response model: {response.model!r}")
+    values = [getattr(response.usage, k, None) for k in ("prompt_tokens", "completion_tokens", "total_tokens")]
+    if any(type(v) is not int or v < 0 for v in values) or values[2] != values[0] + values[1]:
+        raise ValueError("DeepSeek Flash usage missing or inconsistent")

@@ -93,6 +93,7 @@ def main():
     parser.add_argument("--max-attempts", type=int, default=2)
     parser.add_argument("--max-output-tokens", type=int, default=4096)
     parser.add_argument("--budget-db", type=Path, default=None, help="Explicit shared Pro cumulative ledger")
+    parser.add_argument("--team-profile", choices=["baseline", "adaptive_native"], default="baseline")
     args = parser.parse_args()
     if args.parallelism is None:
         args.parallelism = 1 if args.pilot else 8
@@ -105,8 +106,15 @@ def main():
     provider = os.getenv("MANTA_PROVIDER", "deepseek")
     gpt4o = provider != "deepseek"
     pro = provider == "deepseek" and os.getenv("DEEPSEEK_MODEL") == "deepseek-v4-pro"
-    if not 1 <= args.max_output_tokens <= 393216 or (not pro and args.max_output_tokens != 4096):
-        parser.error("Output override is supported only for Pro, within 1..393216")
+    adaptive = args.team_profile == "adaptive_native"
+    if adaptive and (provider != "deepseek" or os.getenv("DEEPSEEK_MODEL") != "deepseek-flash" or args.pilot):
+        parser.error("Adaptive profile requires official deepseek-flash, not a pilot")
+    if adaptive and any(os.getenv(k, "deepseek-flash") != "deepseek-flash" for k in ("DEEPSEEK_PLANNER_MODEL", "DEEPSEEK_AUDITOR_MODEL")):
+        parser.error("All adaptive experiment roles must use deepseek-flash")
+    if not 1 <= args.max_output_tokens <= 393216 or (not (pro or adaptive) and args.max_output_tokens != 4096):
+        parser.error("Output override requires Pro or the adaptive Flash profile")
+    if adaptive and args.max_output_tokens != 16384:
+        parser.error("Approved adaptive Flash configuration requires 16384 output tokens")
     if args.budget_db is not None and not pro:
         parser.error("Shared external ledger option is Pro-only")
     if args.pilot and (not gpt4o or args.smoke):
@@ -115,6 +123,8 @@ def main():
         args.run_dir = (args.pilot_dir if args.pilot else ROOT / "results/v1/formal_80_seed42_gpt4o") if gpt4o else ROOT / "results/v1/formal_80_seed42"
         if pro:
             args.run_dir = ROOT / "results/v1/formal_80_seed42_deepseek_pro"
+        if adaptive:
+            args.run_dir = ROOT / "results/v1/formal_80_seed42_deepseek_flash_adaptive"
     from agentdojo_manta.adapter import AdapterPaths, _import_manta
     from agentdojo_manta.budget import RequestBudget, GPT4oBudget, DeepSeekProBudget
     from agentdojo_manta.metrics import summarize
@@ -139,26 +149,39 @@ def main():
         manifest["pricing_multiplier"] = os.getenv("GPT4O_PRICE_MULTIPLIER", "1")
         if provider == "qdd" and os.getenv("GPT4O_PRICING_EVIDENCE"):
             manifest["pricing_evidence_sha256"] = hashlib.sha256(Path(os.environ["GPT4O_PRICING_EVIDENCE"]).read_bytes()).hexdigest()
-    elif pro:
+    elif pro or adaptive:
         from agentdojo_manta.replication import load_replication_plan
         forbidden = [k for k in os.environ if k.startswith(("MAS_", "MANTA_", "OPENROUTER_")) and k != "MANTA_PROVIDER"]
         if forbidden:
             parser.error(f"Remove unverified runtime overrides: {', '.join(sorted(forbidden))}")
-        manifest = load_replication_plan(ROOT, provider="deepseek", source_digest=fingerprint(), model="deepseek-v4-pro")
+        manifest = load_replication_plan(ROOT, provider="deepseek", source_digest=fingerprint(), model="deepseek-flash" if adaptive else "deepseek-v4-pro")
         manifest["connectivity_probe"] = "required_before_formal_launch"
     else:
         manifest = freeze_plan(os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash"))
+    if adaptive:
+        manifest["protocol"] = "manta-agentdojo-adaptive-native-flash-v1"
+        manifest["config"].update(num_agents=5, audit_mode="hybrid", team_profile="adaptive_native")
+        manifest["write_protocol"] = "adaptive_native"
+        manifest["skill_update_batch_size"] = 0
+        manifest["budget_cap_usd"] = 100
+        manifest["max_operations_per_mutation"] = 3
+        manifest["pricing_rates_usd_per_million"] = {"input": 0.3, "output": 1.2}
+        manifest["experiment_config_sha256"] = hashlib.sha256((ROOT / "docs/manta/flash_adaptive_config.json").read_bytes()).hexdigest()
     manifest["mock"] = args.smoke
     if args.limit:
         jobs = manifest["jobs"]
         manifest["jobs"] = [jobs[offset + index] for index in range(40)
                             for offset in range(0, 160, 40)][:args.limit]
     run_dir = args.run_dir.resolve()
-    if pro:
+    if pro or adaptive:
         if args.max_output_tokens != 4096 and run_dir == (ROOT / "results/v1/formal_80_seed42_deepseek_pro").resolve():
             parser.error("Changed output limit requires a separate run directory")
         manifest["max_output_tokens"] = args.max_output_tokens
         manifest["budget_db"] = str((args.budget_db or run_dir / "budget.sqlite").resolve())
+    if adaptive:
+        protected = {"formal_80_seed42", "formal_80_seed42_gpt4o", "formal_80_seed42_deepseek_pro", "formal_80_seed42_deepseek_pro_16k"}
+        if run_dir.name in protected or run_dir.is_relative_to(ROOT / "reports"):
+            parser.error("Adaptive experiment must use its own private result directory")
     if pro and run_dir in {(ROOT / "results/v1/formal_80_seed42").resolve(), (ROOT / "results/v1/formal_80_seed42_gpt4o").resolve()}:
         parser.error("Pro must use a separate result directory")
     if gpt4o and run_dir == (ROOT / "results/v1/formal_80_seed42").resolve():
@@ -236,11 +259,16 @@ def main():
                (manifest["config"]["model"], manifest["planner_model"], manifest["auditor_model"])):
             parser.error("Model does not match the selected DeepSeek price profile")
         if not gpt4o:
-            if pro:
+            if pro or adaptive:
                 probe_path = run_dir / "connectivity.json"
                 probe = json.loads(probe_path.read_text(encoding="utf-8")) if probe_path.exists() else {}
-                if probe.get("status") != "completed" or probe.get("requested_model") != "deepseek-v4-pro":
-                    parser.error("Run probe_deepseek_pro.py successfully before starting Pro episodes")
+                expected_model = "deepseek-flash" if adaptive else "deepseek-v4-pro"
+                if probe.get("status") != "completed" or probe.get("requested_model") != expected_model or probe.get("endpoint", "").rstrip("/") != manifest["endpoint"].rstrip("/"):
+                    parser.error("A successful real connectivity receipt for the selected model/endpoint is required")
+                if adaptive and probe.get("budget_db") != str((run_dir / "budget.sqlite").resolve()):
+                    parser.error("Adaptive connectivity receipt must use this run's independent budget")
+            if adaptive and os.environ["V1_MAX_COST_USD"] != "100":
+                parser.error("Approved adaptive experiment has an independent $100 cap")
             budget = budget_class(args.budget_db or run_dir / "budget.sqlite", os.environ["V1_MAX_COST_USD"])
         with budget.connect() as db:
             # Previous launcher may have lost a response. Retain the reservation.
@@ -292,7 +320,7 @@ def main():
                     env.pop("V1_BUDGET_DB", None)
                 else:
                     env["V1_BUDGET_DB"] = budget.path
-                    if pro:
+                    if pro or adaptive:
                         env["V1_REQUEST_JOURNAL"] = str(attempt / "requests.jsonl")
                         env["OPENROUTER_MAX_TOKENS"] = str(args.max_output_tokens)
             else:
@@ -320,7 +348,7 @@ def main():
             row["queue_run_id"] = job["run_id"]
             row["scene_id"] = job["scene_id"]
             write_json(attempt / "queue_result.json", row)
-            if (gpt4o or pro) and any(r.get("http_status") in (400, 401, 403, 404) or r.get("error_type") == "ValueError" for r in row.get("llm_requests", [])):
+            if (gpt4o or pro or adaptive) and any(r.get("http_status") in (400, 401, 403, 404) or r.get("error_type") == "ValueError" for r in row.get("llm_requests", [])):
                 stop.set()
             if row.get("evaluation_valid") is True or args.smoke or row.get("run_status") == "BLOCKED":
                 break

@@ -98,6 +98,7 @@ class SelfEvolvedEngine:
         tools = augment_with_transaction_tools(tools, task_prompt=task_prompt)
 
         num_agents = min(int(spec.num_agents), int(self.se_config.max_initial_agents))
+        adaptive_native = self.se_config.write_protocol == "adaptive_native"
         # Tool-bearing tasks run a multi-iteration tool loop per agent. Extra agents
         # mostly re-issue the same calls (same search corpus / same API) and converge on
         # the same evidence, so they multiply runtime/memory without adding quality —
@@ -120,7 +121,8 @@ class SelfEvolvedEngine:
             else:
                 # Non-retrieval tool tasks get a repair turn; cap breadth so the second
                 # turn cannot OOM and to limit duplicate side-effecting tool calls.
-                num_agents = min(num_agents, 3)
+                if not adaptive_native:
+                    num_agents = min(num_agents, 3)
 
         # 1. PLAN — phase 2 replaces this with the LLM Topology Planner.
         plan_started = time.perf_counter()
@@ -142,7 +144,7 @@ class SelfEvolvedEngine:
                 "policy": "commit_once",
                 "calendar_scheduling_mode": calendar_mode,
             }
-        elif mutation_tool_names:
+        elif mutation_tool_names and not adaptive_native:
             topo_spec = self._transactional_star_spec(
                 topo_spec, minimum_agents=min(3, max(2, num_agents))
             )
@@ -151,6 +153,11 @@ class SelfEvolvedEngine:
                 "mutation_tools": sorted(mutation_tool_names),
                 "policy": "readers_then_single_committer",
                 "calendar_scheduling_mode": calendar_mode,
+            }
+        if adaptive_native:
+            plan_payload["transaction_protocol"] = {
+                "policy": "adaptive_native", "mutation_tools": sorted(mutation_tool_names),
+                "write_effects": "immediate_official_runtime", "force_star": False,
             }
         plan_latency_ms = max((time.perf_counter() - plan_started) * 1000.0, 1.0)
         topo_spec.validate(max_agents=int(self.se_config.max_total_agents))
@@ -183,7 +190,7 @@ class SelfEvolvedEngine:
         if commit_once:
             state["self_evolved_write_protocol"] = "commit_once"
             state["self_evolved_calendar_scheduling_mode"] = calendar_mode
-        elif mutation_tool_names:
+        elif mutation_tool_names and not adaptive_native:
             state["self_evolved_mutation_tool_names"] = sorted(mutation_tool_names)
             state["self_evolved_committer_id"] = str(
                 topo_spec.group(topo_spec.root_group_id).leader_id or ""
@@ -257,7 +264,14 @@ class SelfEvolvedEngine:
         decision: TerminationDecision = {}
 
         for turn_index in range(max_turns):
+            stage_start = len(state.get("interaction_logs", []))
+            execution_graph = {"turn_index": turn_index, "topology_spec": topo_spec.to_payload()}
+            state.setdefault("execution_graphs", []).append(execution_graph)
             result = executor.run_turn(state, topo_spec, turn_index=turn_index)
+            execution_graph["stage_sequence"] = [
+                {"agent_id": stage.get("agent_id"), "node_name": stage.get("phase"), "stage_role": stage.get("stage_role")}
+                for stage in state.get("interaction_logs", [])[stage_start:]
+            ]
             turn_results.append(result)
             apply_updates(state, self._stage._descriptor_monitor_node(state))
 
@@ -268,7 +282,7 @@ class SelfEvolvedEngine:
             mutations_used = len(spec_versions) - 1
             repeated_decision = self._repair_repeated_decision(turn_results)
             # Under commit_once nothing is committed before finalize, so repair stays open.
-            transaction_committed = bool(mutation_tool_names) and not commit_once and any(
+            transaction_committed = bool(mutation_tool_names) and not commit_once and not adaptive_native and any(
                 successful_mutation_record(record, mutation_tool_names)
                 for record in state.get("tool_records_log", [])
                 if isinstance(record, dict)
@@ -375,7 +389,7 @@ class SelfEvolvedEngine:
                 )
                 break
             topo_spec, mutation_payload = mutated
-            if mutation_tool_names and not commit_once:
+            if mutation_tool_names and not commit_once and not adaptive_native:
                 topo_spec = self._transactional_star_spec(
                     topo_spec, minimum_agents=min(3, max(2, num_agents))
                 )
@@ -3373,6 +3387,8 @@ class SelfEvolvedEngine:
                 "harness_backend": str(self.se_config.harness_backend),
                 "initial_planner_mode": str(self.se_config.initial_planner_mode),
                 "topology_spec_versions": list(spec_versions),
+                "execution_graphs": list(state.get("execution_graphs", [])),
+                "write_protocol": self.se_config.write_protocol,
                 "context_state_versions": list(state.get("context_state_versions", [])),
                 "mutation": mutation_payload,
                 "mutations": list(mutation_payloads),

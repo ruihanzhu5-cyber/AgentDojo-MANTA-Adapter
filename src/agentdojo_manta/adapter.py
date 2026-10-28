@@ -83,7 +83,7 @@ def _import_manta(paths: AdapterPaths):
     return OpenRouterConfig, SelfEvolvedConfig, OpenRouterLLMClient, ExperimentSpec, SelfEvolvedEngine
 
 
-def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=None):
+def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=None, thinking_protocol=False):
     OpenRouterConfig, _SelfEvolvedConfig, OpenRouterLLMClient, _ExperimentSpec, _Engine = _import_manta(paths)
 
     from agentdojo_manta.providers import provider_config, gpt4o_sampling, validate_gpt4o_response
@@ -91,6 +91,8 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
     api_key, base_url, model_name = provider.api_key, provider.base_url, provider.model
     is_gpt4o = provider.name != "deepseek"
     is_pro = model_name == "deepseek-v4-pro" and provider.name == "deepseek"
+    use_reasoning_history = is_pro or thinking_protocol
+    strict_live = is_gpt4o or use_reasoning_history
     if is_gpt4o and os.getenv("MAS_DISABLE_LIVE_LLM") != "1" and not api_key:
         raise ValueError("OPENAI_API_KEY is missing")
 
@@ -108,6 +110,8 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
     client = OpenRouterLLMClient(config, models)
     from agentdojo_manta.budget import configured_budget
     budget = configured_budget(model_name)
+    if thinking_protocol and os.getenv("MAS_DISABLE_LIVE_LLM") != "1" and (budget is None or observer is None or not api_key):
+        raise ValueError("Adaptive Flash requires credentials, an observer and a persistent budget")
     if budget is not None:
         from urllib.parse import urlparse
         if not is_gpt4o and urlparse(base_url).hostname != "api.deepseek.com":
@@ -163,7 +167,7 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
             actor_context.agent_id = kwargs.get("agent_id")
             actor_context.agent_type = kwargs.get("agent_type")
             actor_context.generation_id = uuid.uuid4().hex
-            if is_pro:
+            if use_reasoning_history:
                 from agentdojo_manta.deepseek_pro import ProReasoningHistory
                 actor_context.pro_history = ProReasoningHistory()
             try:
@@ -198,9 +202,9 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
             start = time.perf_counter()
             reservation = None
             try:
-                if is_pro:
+                if use_reasoning_history:
                     kwargs = actor_context.pro_history.prepare(kwargs)
-                if (is_gpt4o or is_pro) and getattr(observer, "provider_fatal_error", None):
+                if strict_live and getattr(observer, "provider_fatal_error", None):
                     raise RuntimeError(observer.provider_fatal_error)
                 if budget is not None:
                     reservation = budget.reserve(kwargs.get("model"), int(kwargs["max_tokens"]))
@@ -218,6 +222,10 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
                 if is_pro:
                     from agentdojo_manta.deepseek_pro import validate_pro_response
                     validate_pro_response(response)
+                elif thinking_protocol:
+                    from agentdojo_manta.deepseek_pro import validate_flash_response
+                    validate_flash_response(response)
+                if use_reasoning_history:
                     actor_context.pro_history.remember(response)
                 if budget is not None:
                     record["cost_upper_bound_usd"] = budget.settle(reservation, usage)
@@ -232,7 +240,7 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
                 record["error_type"] = type(exc).__name__
                 record["http_status"] = getattr(exc, "status_code", None)
                 record["status"] = "error"
-                if (is_gpt4o or is_pro) and (record["http_status"] in (400, 401, 403, 404) or isinstance(exc, ValueError)):
+                if strict_live and (record["http_status"] in (400, 401, 403, 404) or isinstance(exc, ValueError)):
                     observer.provider_fatal_error = f"{model_name} provider validation failed: {type(exc).__name__}"
                 journal(record)
                 raise
@@ -378,11 +386,18 @@ class MantaAgentDojoPipeline(BasePipelineElement):
         repair_budget: int = 1,
         initial_planner_mode: str = "task_conditioned",
         audit_mode: str = "heuristic",
+        team_profile: str = "baseline",
     ) -> None:
         _OpenRouterConfig, SelfEvolvedConfig, _Client, ExperimentSpec, SelfEvolvedEngine = _import_manta(paths)
         self.paths = paths
         from agentdojo_manta.providers import provider_config
         self.model = provider_config(model).model
+        if team_profile not in {"baseline", "adaptive_native"}:
+            raise ValueError("Unknown team profile")
+        self.team_profile = team_profile
+        adaptive = team_profile == "adaptive_native"
+        if adaptive and (self.model != "deepseek-flash" or provider_config(model).name != "deepseek"):
+            raise ValueError("Adaptive experiment requires the explicit official deepseek-flash route")
         self.num_agents = int(num_agents)
         self._metrics_lock = threading.Lock()
         self.request_records: list[dict[str, Any]] = []
@@ -407,12 +422,13 @@ class MantaAgentDojoPipeline(BasePipelineElement):
             max_turns=int(max_turns),
             repair_budget=int(repair_budget),
             audit_mode=audit_mode,
+            write_protocol="adaptive_native" if adaptive else "transactional_star",
             playbook_path=str(paths.playbook_path),
             skill_path=str(paths.skill_path),
             skill_update_batch_size=0,
         )
         self.se_config.validate()
-        self._engine = SelfEvolvedEngine(_make_llm_client(paths, self.model, observer=self), self.se_config)
+        self._engine = SelfEvolvedEngine(_make_llm_client(paths, self.model, observer=self, thinking_protocol=adaptive), self.se_config)
         self._experiment_spec = ExperimentSpec(
             topology="self_evolved",
             num_agents=int(num_agents),
@@ -480,6 +496,9 @@ class MantaAgentDojoPipeline(BasePipelineElement):
             "repair_budget": self.se_config.repair_budget,
             "initial_planner_mode": self.se_config.initial_planner_mode,
             "audit_mode": self.se_config.audit_mode,
+            "team_profile": self.team_profile,
+            "write_protocol": self.se_config.write_protocol,
+            "skill_update_batch_size": self.se_config.skill_update_batch_size,
         }
         extra_args = {**extra_args, "manta_run_metadata": metadata, "manta_trace_events": result.trace_events}
         self.last_run_metadata = metadata

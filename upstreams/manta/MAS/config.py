@@ -203,6 +203,8 @@ class SelfEvolvedConfig:
     # "transactional_star": contract every topology into readers -> one committer star.
     # "commit_once": keep the planned topology; write calls are validated and recorded as
     # proposals, and the selected answer's proposals execute once after finalize.
+    # Adapter experiment opt-in: preserve planned graphs and immediate tool effects.
+    # The upstream default remains unchanged.
     write_protocol: str = "transactional_star"
     # How the reflection agent turns run outcomes into lessons.
     # "batch": the agent reads the latest batch's raw process counts (original behaviour).
@@ -238,9 +240,9 @@ class SelfEvolvedConfig:
             raise ValueError("self_evolved.skill_update_batch_size must be >= 0")
         if self.default_packet_max_chars < 0:
             raise ValueError("self_evolved.default_packet_max_chars must be >= 0")
-        if self.write_protocol not in {"transactional_star", "commit_once"}:
+        if self.write_protocol not in {"transactional_star", "commit_once", "adaptive_native"}:
             raise ValueError(
-                "self_evolved.write_protocol must be one of: transactional_star, commit_once"
+                "self_evolved.write_protocol must be transactional_star, commit_once, or adaptive_native"
             )
         if self.reflection_mode not in {"batch", "evidence_gated"}:
             raise ValueError("self_evolved.reflection_mode must be one of: batch, evidence_gated")

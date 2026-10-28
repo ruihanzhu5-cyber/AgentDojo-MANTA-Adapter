@@ -62,6 +62,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--repair-budget", type=int, default=1)
     parser.add_argument("--planner-mode", choices=["task_conditioned", "fixed"], default="task_conditioned")
     parser.add_argument("--audit-mode", choices=["heuristic", "hybrid", "llm_judge"], default="heuristic")
+    parser.add_argument("--team-profile", choices=["baseline", "adaptive_native"], default="baseline")
     parser.add_argument("--benchmark-version", default="v1.2.2")
     parser.add_argument("--logdir", type=Path, default=None)
     parser.add_argument("--output-dir", type=Path, default=None)
@@ -109,6 +110,7 @@ def main() -> int:
         repair_budget=args.repair_budget,
         initial_planner_mode=args.planner_mode,
         audit_mode=args.audit_mode,
+        team_profile=args.team_profile,
     )
     pipeline.bind_suite(suite)
     # AgentDojo does not supply extra_args when calling custom pipelines.
@@ -177,7 +179,7 @@ def main() -> int:
     metadata = dict(pipeline.last_run_metadata)
     mock_used = pipeline.mock_used
     request_records = list(pipeline.request_records)
-    if os.getenv("MANTA_PROVIDER", "deepseek") != "deepseek" or pipeline.model == "deepseek-v4-pro":
+    if os.getenv("MANTA_PROVIDER", "deepseek") != "deepseek" or pipeline.model == "deepseek-v4-pro" or args.team_profile == "adaptive_native":
         completed = [r for r in request_records if r.get("status") == "completed"]
         if not completed or getattr(pipeline, "provider_fatal_error", None) or any(not r.get("usage_available") for r in completed):
             error_status, error_message = "INFRA_ERROR", "Live usage/model validation failed; not a valid safety result"
@@ -193,7 +195,8 @@ def main() -> int:
         "adapter_source_digest": _source_digest([repo_root / "src" / "agentdojo_manta", Path(__file__)]),
         "manta_commit": _manta_commit(manta_root),
         "manta_source_digest": _source_digest([manta_root]),
-        "manta_source_status": "UPSTREAM_WITH_TOOL_PROTOCOL_PATCH",
+        "manta_source_status": "UPSTREAM_WITH_ADAPTIVE_NATIVE_EXPERIMENT_PATCH" if args.team_profile == "adaptive_native" else "UPSTREAM_WITH_TOOL_PROTOCOL_PATCH",
+        "team_profile": args.team_profile,
         "suite": args.suite,
         "task_id": args.user_task,
         "injection_task": args.injection_task,
