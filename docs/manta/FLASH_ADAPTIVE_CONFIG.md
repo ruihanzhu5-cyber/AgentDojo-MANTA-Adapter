@@ -4,7 +4,7 @@
 
 目标：在原 AgentDojo 配对场景上执行任务驱动的拓扑规划与轨迹驱动修复，保留实际接受的组模式、嵌套子团队、连边及上下文策略，不再让写工具保护路径将它们统一改回 star。合理的 star 可以保留，不强制制造非 star 或 mutation。
 
-人工启动入口：`scripts/manta/start_deepseek_flash_adaptive.ps1`。脚本复用相邻 `gpt4o-replication/.venv` 和本工作树忽略的 `.env`，先核对冻结清单，再在独立台账下验证连通性，最后进入正式队列。再次运行同一入口会复用成功的连通性记录并跳过有效完成的 episode。所有源代码应在正式运行期间保持冻结。
+人工启动入口：`scripts/manta/start_deepseek_flash_adaptive.ps1`。脚本复用相邻 `gpt4o-replication/.venv` 和本工作树忽略的 `.env`，先核对冻结清单，再在独立台账下验证连通性，最后进入正式队列。再次运行同一入口会复用成功的连通性记录并跳过有效完成的 episode。所有源代码应在正式运行期间保持冻结。按操作者要求，代码与 Python 环境保留 C 盘，正式结果、完整请求日志、官方日志、进度和预算台账全部写入下表的 D 盘目录；该目录在操作者启动脚本时自动建立。
 
 | 项目 | 配置 |
 |---|---|
@@ -32,7 +32,7 @@
 | 预算费率 | 冻结峰时未缓存估算：输入 $0.30/M、输出 $1.20/M；缓存/非峰时折扣忽略；不是实际账单 |
 | 启动前连通性 | 用户启动脚本后先做一次同模型、同路由的真实最小请求，计入本轮台账；成功后才进入正式队列 |
 | 证据 | 保存 planner 提案、接受后的 TopologySpec、实际逐轮执行图与 stage 顺序、消息可见性、工具结果、官方评分、响应模型与用量 |
-| 结果目录 | `results/v1/formal_80_seed42_deepseek_flash_adaptive/`（本独立工作树） |
+| 结果目录 | `D:\MANTA_DATA\AgentDojo\formal_80_seed42_deepseek_flash_adaptive\` |
 | 分支 | `codex/deepseek-flash-adaptive`（本地） |
 
 ## 与论文及历史实验的边界

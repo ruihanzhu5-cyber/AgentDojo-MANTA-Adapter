@@ -124,7 +124,7 @@ def main():
         if pro:
             args.run_dir = ROOT / "results/v1/formal_80_seed42_deepseek_pro"
         if adaptive:
-            args.run_dir = ROOT / "results/v1/formal_80_seed42_deepseek_flash_adaptive"
+            args.run_dir = Path(json.loads((ROOT / "docs/manta/flash_adaptive_config.json").read_text(encoding="utf-8"))["run_dir"])
     from agentdojo_manta.adapter import AdapterPaths, _import_manta
     from agentdojo_manta.budget import RequestBudget, GPT4oBudget, DeepSeekProBudget
     from agentdojo_manta.metrics import summarize

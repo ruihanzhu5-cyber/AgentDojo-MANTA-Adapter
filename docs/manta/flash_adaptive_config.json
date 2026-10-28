@@ -32,7 +32,7 @@
   "budget_scope": "independent_this_run_including_connectivity_probe",
   "price_input_usd_per_million": 0.3,
   "price_output_usd_per_million": 1.2,
-  "run_dir": "results/v1/formal_80_seed42_deepseek_flash_adaptive",
+  "run_dir": "D:\\MANTA_DATA\\AgentDojo\\formal_80_seed42_deepseek_flash_adaptive",
   "launcher_owner": "user",
   "live_requests_sent_during_preparation": 0
 }

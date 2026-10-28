@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 $adaptiveRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $originalRoot = Join-Path (Split-Path $adaptiveRoot -Parent) 'gpt4o-replication'
 $adaptivePython = Join-Path $originalRoot '.venv/Scripts/python.exe'
-$adaptiveRun = Join-Path $adaptiveRoot 'results/v1/formal_80_seed42_deepseek_flash_adaptive'
+$adaptiveRun = 'D:\MANTA_DATA\AgentDojo\formal_80_seed42_deepseek_flash_adaptive'
 if (-not (Test-Path -LiteralPath $adaptivePython)) { throw "Existing Python environment is missing: $adaptivePython" }
 $ownedNames = @('MANTA_PROVIDER','DEEPSEEK_BASE_URL','DEEPSEEK_MODEL','DEEPSEEK_PLANNER_MODEL','DEEPSEEK_AUDITOR_MODEL','V1_MAX_COST_USD','V1_BUDGET_DB','V1_REQUEST_JOURNAL','OPENROUTER_MAX_TOKENS','PYTHONIOENCODING')
 $savedEnvironment = @{}
