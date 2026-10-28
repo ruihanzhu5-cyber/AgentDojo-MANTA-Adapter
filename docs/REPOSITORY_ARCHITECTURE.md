@@ -4,6 +4,8 @@
 
 Flash 自适应实验通过显式 `adaptive_native` 策略保留 Planner 和修复器接受的图结构，工具继续即时作用于官方模拟环境；补丁涉及 `MAS/config.py` 和 `MAS/self_evolved/engine.py`，上游默认策略不变。模型协议仍由适配层管理。结果、实际执行图、预算和脱敏日志见 [本轮报告](../reports/2026-10-28-deepseek-flash-adaptive/README.md)。
 
+四组实验的统一入口是 [联合分析](../reports/2026-10-28-four-experiment-analysis/README.md)，包含 640 条逐任务特征、角色 token 分解、重复工具统计、成功攻击轨迹摘要和原因分析。该目录是离线分析，不是第五组实验；各轮原日志保持独立归档。
+
 DeepSeek Pro 相关入口：`src/agentdojo_manta/deepseek_pro.py` 保留 reasoning 工具历史，`budget.py` 提供 Pro 独立价格档案，`scripts/manta/start_deepseek_pro_16k.ps1` 为人工启动入口。16K 运行在独立工作树，预算与此前中断的 4K 批次共用累计 $100 台账；配置说明见 [PRO_16K.md](manta/PRO_16K.md)，结果和脱敏日志见 [本轮报告](../reports/2026-10-28-deepseek-pro-16k/README.md)。
 
 ## 目录结构

@@ -1,0 +1,14 @@
+run,actor_category,token_in,token_out,completed_requests,total_tokens,reasoning_tokens,reasoning_usage_requests
+flash_star,topology_planner,288320,387301,188,675621,,0
+flash_star,team_agents,21106030,1727811,2822,22833841,,0
+flash_star,other_auxiliary,805774,1281998,380,2087772,,0
+gpt4o_star,topology_planner,264123,30453,177,294576,0,177
+gpt4o_star,team_agents,9822250,220832,2000,10043082,0,2000
+gpt4o_star,other_auxiliary,89707,23438,66,113145,0,66
+pro16k_star,topology_planner,275204,705820,174,981024,665544,174
+pro16k_star,team_agents,22172701,2561489,2916,24734190,1868234,2916
+pro16k_star,other_auxiliary,348034,848436,165,1196470,718302,165
+flash16k_adaptive,topology_planner,332234,417537,210,749771,366977,210
+flash16k_adaptive,team_agents,21664711,1348374,2617,23013085,599682,2617
+flash16k_adaptive,trace_auditor,1152647,1536713,225,2689360,1487035,225
+flash16k_adaptive,other_auxiliary,492010,1185054,241,1677064,916495,241

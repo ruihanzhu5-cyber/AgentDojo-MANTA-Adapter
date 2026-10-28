@@ -1,0 +1,132 @@
+[
+  {
+    "run": "flash_star",
+    "actor_category": "topology_planner",
+    "token_in": 288320,
+    "token_out": 387301,
+    "completed_requests": 188,
+    "total_tokens": 675621,
+    "reasoning_tokens": null,
+    "reasoning_usage_requests": 0
+  },
+  {
+    "run": "flash_star",
+    "actor_category": "team_agents",
+    "token_in": 21106030,
+    "token_out": 1727811,
+    "completed_requests": 2822,
+    "total_tokens": 22833841,
+    "reasoning_tokens": null,
+    "reasoning_usage_requests": 0
+  },
+  {
+    "run": "flash_star",
+    "actor_category": "other_auxiliary",
+    "token_in": 805774,
+    "token_out": 1281998,
+    "completed_requests": 380,
+    "total_tokens": 2087772,
+    "reasoning_tokens": null,
+    "reasoning_usage_requests": 0
+  },
+  {
+    "run": "gpt4o_star",
+    "actor_category": "topology_planner",
+    "token_in": 264123,
+    "token_out": 30453,
+    "completed_requests": 177,
+    "total_tokens": 294576,
+    "reasoning_tokens": 0,
+    "reasoning_usage_requests": 177
+  },
+  {
+    "run": "gpt4o_star",
+    "actor_category": "team_agents",
+    "token_in": 9822250,
+    "token_out": 220832,
+    "completed_requests": 2000,
+    "total_tokens": 10043082,
+    "reasoning_tokens": 0,
+    "reasoning_usage_requests": 2000
+  },
+  {
+    "run": "gpt4o_star",
+    "actor_category": "other_auxiliary",
+    "token_in": 89707,
+    "token_out": 23438,
+    "completed_requests": 66,
+    "total_tokens": 113145,
+    "reasoning_tokens": 0,
+    "reasoning_usage_requests": 66
+  },
+  {
+    "run": "pro16k_star",
+    "actor_category": "topology_planner",
+    "token_in": 275204,
+    "token_out": 705820,
+    "completed_requests": 174,
+    "total_tokens": 981024,
+    "reasoning_tokens": 665544,
+    "reasoning_usage_requests": 174
+  },
+  {
+    "run": "pro16k_star",
+    "actor_category": "team_agents",
+    "token_in": 22172701,
+    "token_out": 2561489,
+    "completed_requests": 2916,
+    "total_tokens": 24734190,
+    "reasoning_tokens": 1868234,
+    "reasoning_usage_requests": 2916
+  },
+  {
+    "run": "pro16k_star",
+    "actor_category": "other_auxiliary",
+    "token_in": 348034,
+    "token_out": 848436,
+    "completed_requests": 165,
+    "total_tokens": 1196470,
+    "reasoning_tokens": 718302,
+    "reasoning_usage_requests": 165
+  },
+  {
+    "run": "flash16k_adaptive",
+    "actor_category": "topology_planner",
+    "token_in": 332234,
+    "token_out": 417537,
+    "completed_requests": 210,
+    "total_tokens": 749771,
+    "reasoning_tokens": 366977,
+    "reasoning_usage_requests": 210
+  },
+  {
+    "run": "flash16k_adaptive",
+    "actor_category": "team_agents",
+    "token_in": 21664711,
+    "token_out": 1348374,
+    "completed_requests": 2617,
+    "total_tokens": 23013085,
+    "reasoning_tokens": 599682,
+    "reasoning_usage_requests": 2617
+  },
+  {
+    "run": "flash16k_adaptive",
+    "actor_category": "trace_auditor",
+    "token_in": 1152647,
+    "token_out": 1536713,
+    "completed_requests": 225,
+    "total_tokens": 2689360,
+    "reasoning_tokens": 1487035,
+    "reasoning_usage_requests": 225
+  },
+  {
+    "run": "flash16k_adaptive",
+    "actor_category": "other_auxiliary",
+    "token_in": 492010,
+    "token_out": 1185054,
+    "completed_requests": 241,
+    "total_tokens": 1677064,
+    "reasoning_tokens": 916495,
+    "reasoning_usage_requests": 241
+  }
+]

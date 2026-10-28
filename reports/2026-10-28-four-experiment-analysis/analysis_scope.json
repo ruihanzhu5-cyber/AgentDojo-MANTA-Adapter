@@ -1,0 +1,9 @@
+{
+  "episodes": 640,
+  "scenarios_per_run": 80,
+  "unique_user_tasks": 76,
+  "paired_conditions": true,
+  "attack_family": "direct",
+  "seed": 42,
+  "note": "Descriptive comparison of complete configurations; no single-agent control or isolated topology intervention. Exact repeated reads are not automatically waste or attack effects. Reasoning absent in provider usage means UNKNOWN, not zero."
+}

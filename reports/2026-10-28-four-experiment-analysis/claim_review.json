@@ -1,0 +1,14 @@
+{
+  "claim_supported": "partial",
+  "what_results_support": "Four-configuration descriptive differences and specific resource/trust/action-boundary mechanisms demonstrated by source code and retained traces.",
+  "what_results_dont_support": "A causal estimate of topology, team size, reasoning or audit independently; general prompt-injection robustness; net overhead versus a matched single agent.",
+  "integrity_status": "independent_audit_unavailable; prior mechanical consistency checks retained",
+  "confidence": {
+    "case_and_code_facts": "high",
+    "broader_architectural_interpretation": "medium",
+    "isolated_causal_effects": "not_identified"
+  },
+  "routing": "offline_analysis_only; suggested controls not launched",
+  "reviewer": "independent secondary Codex agent",
+  "private_full_trace_committed": false
+}

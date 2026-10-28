@@ -14,6 +14,7 @@
 - **[全部实验报告](reports/README.md)** · **[全部公开日志包](reports/LOGS.md)**
 - **[DeepSeek Pro 16K 报告与三模型比较](reports/2026-10-28-deepseek-pro-16k/README.md)** · [脱敏日志](reports/2026-10-28-deepseek-pro-16k/logs/README.md) · [16K 配置与启动说明](docs/manta/PRO_16K.md)
 - **[Flash 自适应实验与四组比较](reports/2026-10-28-deepseek-flash-adaptive/README.md)** · [实际执行图](reports/2026-10-28-deepseek-flash-adaptive/execution_graphs.csv) · [脱敏日志](reports/2026-10-28-deepseek-flash-adaptive/logs/README.md)
+- **[四组联合分析：token、重复工具、修复与安全边界](reports/2026-10-28-four-experiment-analysis/README.md)** · [640 条统一特征表](reports/2026-10-28-four-experiment-analysis/episode_features.csv)
 
 Pro 本轮输出上限为 16384，历史 DeepSeek / GPT-4o 为 4096；比较反映各完整配置的表现，不能把差异全部归因于模型。
 
