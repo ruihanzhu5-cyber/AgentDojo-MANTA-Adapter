@@ -102,12 +102,15 @@ def main():
         os.environ["MANTA_PROVIDER"] = args.provider
     provider = os.getenv("MANTA_PROVIDER", "deepseek")
     gpt4o = provider != "deepseek"
+    pro = provider == "deepseek" and os.getenv("DEEPSEEK_MODEL") == "deepseek-v4-pro"
     if args.pilot and (not gpt4o or args.smoke):
         parser.error("--pilot requires a real GPT-4o provider; mock pilot is forbidden")
     if args.run_dir is None:
         args.run_dir = (args.pilot_dir if args.pilot else ROOT / "results/v1/formal_80_seed42_gpt4o") if gpt4o else ROOT / "results/v1/formal_80_seed42"
+        if pro:
+            args.run_dir = ROOT / "results/v1/formal_80_seed42_deepseek_pro"
     from agentdojo_manta.adapter import AdapterPaths, _import_manta
-    from agentdojo_manta.budget import RequestBudget, GPT4oBudget
+    from agentdojo_manta.budget import RequestBudget, GPT4oBudget, DeepSeekProBudget
     from agentdojo_manta.metrics import summarize
     if not 1 <= args.parallelism <= 8 or args.max_attempts < 1:
         parser.error("parallelism must be 1..8; max-attempts must be positive")
@@ -130,6 +133,13 @@ def main():
         manifest["pricing_multiplier"] = os.getenv("GPT4O_PRICE_MULTIPLIER", "1")
         if provider == "qdd" and os.getenv("GPT4O_PRICING_EVIDENCE"):
             manifest["pricing_evidence_sha256"] = hashlib.sha256(Path(os.environ["GPT4O_PRICING_EVIDENCE"]).read_bytes()).hexdigest()
+    elif pro:
+        from agentdojo_manta.replication import load_replication_plan
+        forbidden = [k for k in os.environ if k.startswith(("MAS_", "MANTA_", "OPENROUTER_")) and k != "MANTA_PROVIDER"]
+        if forbidden:
+            parser.error(f"Remove unverified runtime overrides: {', '.join(sorted(forbidden))}")
+        manifest = load_replication_plan(ROOT, provider="deepseek", source_digest=fingerprint(), model="deepseek-v4-pro")
+        manifest["connectivity_probe"] = "required_before_formal_launch"
     else:
         manifest = freeze_plan(os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash"))
     manifest["mock"] = args.smoke
@@ -138,6 +148,8 @@ def main():
         manifest["jobs"] = [jobs[offset + index] for index in range(40)
                             for offset in range(0, 160, 40)][:args.limit]
     run_dir = args.run_dir.resolve()
+    if pro and run_dir in {(ROOT / "results/v1/formal_80_seed42").resolve(), (ROOT / "results/v1/formal_80_seed42_gpt4o").resolve()}:
+        parser.error("Pro must use a separate result directory")
     if gpt4o and run_dir == (ROOT / "results/v1/formal_80_seed42").resolve():
         parser.error("GPT-4o must never write to the original DeepSeek result directory")
     if gpt4o and args.smoke and run_dir in {(ROOT / "results/v1/formal_80_seed42_gpt4o").resolve(), args.pilot_dir.resolve()}:
@@ -208,11 +220,17 @@ def main():
             parser.error("DEEPSEEK_API_KEY missing; existing environment/.env is reused")
         if not gpt4o and not os.getenv("V1_MAX_COST_USD"):
             parser.error("Task book requires explicit V1_MAX_COST_USD before the paid formal run")
-        if not gpt4o and any(model not in RequestBudget.MODELS for model in
+        budget_class = DeepSeekProBudget if pro else RequestBudget
+        if not gpt4o and any(model not in budget_class.MODELS for model in
                (manifest["config"]["model"], manifest["planner_model"], manifest["auditor_model"])):
-            parser.error("Verified monetary guard supports the DeepSeek Flash model family only")
+            parser.error("Model does not match the selected DeepSeek price profile")
         if not gpt4o:
-            budget = RequestBudget(run_dir / "budget.sqlite", os.environ["V1_MAX_COST_USD"])
+            if pro:
+                probe_path = run_dir / "connectivity.json"
+                probe = json.loads(probe_path.read_text(encoding="utf-8")) if probe_path.exists() else {}
+                if probe.get("status") != "completed" or probe.get("requested_model") != "deepseek-v4-pro":
+                    parser.error("Run probe_deepseek_pro.py successfully before starting Pro episodes")
+            budget = budget_class(run_dir / "budget.sqlite", os.environ["V1_MAX_COST_USD"])
         with budget.connect() as db:
             # Previous launcher may have lost a response. Retain the reservation.
             db.execute("UPDATE requests SET state='uncertain' WHERE state='pending'")
@@ -263,6 +281,8 @@ def main():
                     env.pop("V1_BUDGET_DB", None)
                 else:
                     env["V1_BUDGET_DB"] = budget.path
+                    if pro:
+                        env["V1_REQUEST_JOURNAL"] = str(attempt / "requests.jsonl")
             else:
                 env.pop("V1_BUDGET_DB", None)
             with (attempt / "console.log").open("w", encoding="utf-8") as console:
@@ -288,7 +308,7 @@ def main():
             row["queue_run_id"] = job["run_id"]
             row["scene_id"] = job["scene_id"]
             write_json(attempt / "queue_result.json", row)
-            if gpt4o and any(r.get("http_status") in (400, 401, 403, 404) or r.get("error_type") == "ValueError" for r in row.get("llm_requests", [])):
+            if (gpt4o or pro) and any(r.get("http_status") in (400, 401, 403, 404) or r.get("error_type") == "ValueError" for r in row.get("llm_requests", [])):
                 stop.set()
             if row.get("evaluation_valid") is True or args.smoke or row.get("run_status") == "BLOCKED":
                 break

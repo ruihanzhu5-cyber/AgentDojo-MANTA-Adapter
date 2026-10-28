@@ -9,7 +9,7 @@ from collections import Counter
 from pathlib import Path
 
 
-def load_replication_plan(root: Path, *, provider: str, source_digest: str, pilot: bool = False):
+def load_replication_plan(root: Path, *, provider: str, source_digest: str, pilot: bool = False, model: str = "gpt-4o"):
     from agentdojo.attacks.attack_registry import load_attack
     from agentdojo.task_suite.load_suites import get_suites
     source = root / "reports/2026-10-19-manta-agentdojo/manifest.json"
@@ -36,13 +36,19 @@ def load_replication_plan(root: Path, *, provider: str, source_digest: str, pilo
     if jobs != expected_jobs:
         raise ValueError("Original job scene/task/injection/payload pairing differs")
     plan = copy.deepcopy(original)
-    plan.update(provider=provider, endpoint={"qdd": "https://api2.aigcbest.top/v1", "openai": "https://api.openai.com/v1"}[provider],
+    if model not in {"gpt-4o", "deepseek-v4-pro"} or (model == "deepseek-v4-pro" and provider != "deepseek"):
+        raise ValueError("Unsupported model/provider replication pair")
+    plan.update(provider=provider, endpoint={"qdd": "https://api2.aigcbest.top/v1", "openai": "https://api.openai.com/v1", "deepseek": "https://api.deepseek.com/v1"}[provider],
                 original_manifest_sha256=hashlib.sha256(source.read_bytes()).hexdigest(),
-                source_sha256=source_digest, planner_model="gpt-4o", auditor_model="gpt-4o",
+                source_sha256=source_digest, planner_model=model, auditor_model=model,
                 stage="pilot" if pilot else "formal", max_tool_iterations=8,
                 pricing_source="https://api2.aigcbest.top/api/pricing" if provider == "qdd" else "https://developers.openai.com/api/docs/models/gpt-4o",
                 budget_accounting="GPT-4o independent rates; uncached upper bound; unresolved requests retain full reservation")
-    plan["config"]["model"] = "gpt-4o"
+    plan["config"]["model"] = model
+    if model == "deepseek-v4-pro":
+        plan.update(pricing_source="https://api-docs.deepseek.com/quick_start/pricing/",
+                    budget_accounting="Pro peak uncached rates; full-context reservations; not invoice cost",
+                    thinking="enabled (provider default); actual reasoning_content preserved on retained tool turns")
     if pilot:
         ids = {next(s["scene_id"] for s in scenes if s["suite"] == suite) for suite in sorted(suites)}
         plan["scenes"] = [s for s in scenes if s["scene_id"] in ids]

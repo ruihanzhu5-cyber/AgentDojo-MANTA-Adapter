@@ -96,7 +96,7 @@ class RequestBudget:
                 "blocked": blocked, "invoice_cost_usd": None}
 
 
-def configured_budget() -> RequestBudget | None:
+def configured_budget(model: str | None = None) -> RequestBudget | None:
     if os.getenv("MANTA_PROVIDER", "deepseek") != "deepseek":
         path = os.getenv("GPT4O_BUDGET_DB")
         if not path:
@@ -105,7 +105,30 @@ def configured_budget() -> RequestBudget | None:
             raise ValueError("GPT-4o requires a persistent request budget")
         return GPT4oBudget(path, os.environ["GPT4O_MAX_COST_USD"])
     path = os.getenv("V1_BUDGET_DB")
+    if (model or os.getenv("DEEPSEEK_MODEL")) == "deepseek-v4-pro":
+        if not path and os.getenv("MAS_DISABLE_LIVE_LLM") != "1":
+            raise ValueError("DeepSeek Pro requires a persistent request budget")
+        return DeepSeekProBudget(path, os.environ["V1_MAX_COST_USD"]) if path else None
     return RequestBudget(path, os.environ["V1_MAX_COST_USD"]) if path else None
+
+
+class DeepSeekProBudget(RequestBudget):
+    """Official peak, uncached prices verified 2026-10-28; discounts ignored."""
+    INPUT_RATE = 1320
+    OUTPUT_RATE = 3960
+    MODELS = {"deepseek-v4-pro"}
+
+    def __init__(self, path, limit):
+        super().__init__(path, limit)
+        identity = "deepseek:deepseek-v4-pro:1320:3960:1048576"
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            previous = db.execute("SELECT value FROM settings WHERE key='pricing_identity'").fetchone()
+            if previous and previous[0] != identity:
+                raise ValueError("Existing ledger belongs to a different model or price profile")
+            if not previous and db.execute("SELECT COUNT(*) FROM requests").fetchone()[0]:
+                raise ValueError("Cannot reuse a Flash/GPT-4o ledger for Pro")
+            db.execute("INSERT OR IGNORE INTO settings VALUES ('pricing_identity', ?)", (identity,))
 
 
 class GPT4oBudget(RequestBudget):

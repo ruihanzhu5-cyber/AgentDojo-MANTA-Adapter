@@ -90,6 +90,7 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
     provider = provider_config(model)
     api_key, base_url, model_name = provider.api_key, provider.base_url, provider.model
     is_gpt4o = provider.name != "deepseek"
+    is_pro = model_name == "deepseek-v4-pro" and provider.name == "deepseek"
     if is_gpt4o and os.getenv("MAS_DISABLE_LIVE_LLM") != "1" and not api_key:
         raise ValueError("OPENAI_API_KEY is missing")
 
@@ -106,7 +107,7 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
     }
     client = OpenRouterLLMClient(config, models)
     from agentdojo_manta.budget import configured_budget
-    budget = configured_budget()
+    budget = configured_budget(model_name)
     if budget is not None:
         from urllib.parse import urlparse
         if not is_gpt4o and urlparse(base_url).hostname != "api.deepseek.com":
@@ -148,7 +149,7 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
     if observer is not None:
         original_once = client._create_chat_completion_once
         original_generate = client.generate
-        journal_path = os.getenv("GPT4O_REQUEST_JOURNAL") if is_gpt4o else None
+        journal_path = os.getenv("GPT4O_REQUEST_JOURNAL") if is_gpt4o else os.getenv("V1_REQUEST_JOURNAL")
 
         def journal(record, **extra):
             if journal_path:
@@ -162,6 +163,9 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
             actor_context.agent_id = kwargs.get("agent_id")
             actor_context.agent_type = kwargs.get("agent_type")
             actor_context.generation_id = uuid.uuid4().hex
+            if is_pro:
+                from agentdojo_manta.deepseek_pro import ProReasoningHistory
+                actor_context.pro_history = ProReasoningHistory()
             try:
                 result = original_generate(**kwargs)
                 with observer._metrics_lock:
@@ -194,13 +198,16 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
             start = time.perf_counter()
             reservation = None
             try:
-                if is_gpt4o and getattr(observer, "provider_fatal_error", None):
+                if is_pro:
+                    kwargs = actor_context.pro_history.prepare(kwargs)
+                if (is_gpt4o or is_pro) and getattr(observer, "provider_fatal_error", None):
                     raise RuntimeError(observer.provider_fatal_error)
                 if budget is not None:
                     reservation = budget.reserve(kwargs.get("model"), int(kwargs["max_tokens"]))
                     record["budget_request_id"] = reservation
                 journal(record, status="pending", messages=kwargs.get("messages"), tools=kwargs.get("tools"),
-                        max_tokens=kwargs.get("max_tokens"), parallel_tool_calls=kwargs.get("parallel_tool_calls"))
+                        max_tokens=kwargs.get("max_tokens"), parallel_tool_calls=kwargs.get("parallel_tool_calls"),
+                        thinking=(kwargs.get("extra_body") or {}).get("thinking"))
                 response = original_once(**kwargs)
                 usage = getattr(response, "usage", None)
                 record["provider_model"] = getattr(response, "model", None)
@@ -208,6 +215,10 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
                 record["raw_usage"] = usage.model_dump() if hasattr(usage, "model_dump") else None
                 if is_gpt4o:
                     validate_gpt4o_response(response)
+                if is_pro:
+                    from agentdojo_manta.deepseek_pro import validate_pro_response
+                    validate_pro_response(response)
+                    actor_context.pro_history.remember(response)
                 if budget is not None:
                     record["cost_upper_bound_usd"] = budget.settle(reservation, usage)
                 record.update(status="completed", usage_available=usage is not None,
@@ -221,8 +232,8 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
                 record["error_type"] = type(exc).__name__
                 record["http_status"] = getattr(exc, "status_code", None)
                 record["status"] = "error"
-                if is_gpt4o and (record["http_status"] in (400, 401, 403, 404) or isinstance(exc, ValueError)):
-                    observer.provider_fatal_error = f"GPT-4o provider validation failed: {type(exc).__name__}"
+                if (is_gpt4o or is_pro) and (record["http_status"] in (400, 401, 403, 404) or isinstance(exc, ValueError)):
+                    observer.provider_fatal_error = f"{model_name} provider validation failed: {type(exc).__name__}"
                 journal(record)
                 raise
             finally:

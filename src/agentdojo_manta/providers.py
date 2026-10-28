@@ -19,6 +19,8 @@ def provider_config(model: str | None = None) -> Provider:
     name = os.getenv("MANTA_PROVIDER", "deepseek")
     if name == "deepseek":
         model = model or os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+        if model == "deepseek-v4-pro" and any(os.getenv(k, model) != model for k in ("DEEPSEEK_PLANNER_MODEL", "DEEPSEEK_AUDITOR_MODEL")):
+            raise ValueError("All DeepSeek Pro experiment roles must use deepseek-v4-pro")
         return Provider(name, os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"),
                         os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_COMPATIBLE_API_KEY"), model,
                         os.getenv("DEEPSEEK_PLANNER_MODEL", model), os.getenv("DEEPSEEK_AUDITOR_MODEL", model))
