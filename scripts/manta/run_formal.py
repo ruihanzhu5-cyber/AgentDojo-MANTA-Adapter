@@ -85,6 +85,8 @@ def main():
     parser.add_argument("--provider", choices=["deepseek", "openai", "qdd"], default=None)
     parser.add_argument("--pilot", action="store_true", help="Four frozen scenes, clean/attack pairs; real API, $10 cap")
     parser.add_argument("--pilot-dir", type=Path, default=ROOT / "results/v1/pilot_4_seed42_gpt4o")
+    parser.add_argument("--skip-pilot-check", action="store_true",
+                        help="Operator explicitly waives remaining pilot validation; recorded in the formal manifest")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--limit", type=int, help="Smoke-only episode limit")
@@ -124,6 +126,7 @@ def main():
         if forbidden:
             parser.error(f"Remove unverified inherited runtime overrides: {', '.join(sorted(forbidden))}")
         manifest = load_replication_plan(ROOT, provider=provider, source_digest=fingerprint(), pilot=args.pilot)
+        manifest["pilot_validation"] = "waived_by_operator" if args.skip_pilot_check else "required"
         manifest["pricing_multiplier"] = os.getenv("GPT4O_PRICE_MULTIPLIER", "1")
         if provider == "qdd" and os.getenv("GPT4O_PRICING_EVIDENCE"):
             manifest["pricing_evidence_sha256"] = hashlib.sha256(Path(os.environ["GPT4O_PRICING_EVIDENCE"]).read_bytes()).hexdigest()
@@ -187,12 +190,19 @@ def main():
             else:
                 if not os.getenv("GPT4O_MAX_COST_USD"):
                     parser.error("Explicit cumulative GPT4O_MAX_COST_USD required before formal launch")
-                acceptance_path = args.pilot_dir / "pilot_acceptance.json"
-                if not acceptance_path.exists():
-                    parser.error("An accepted real GPT-4o pilot is required")
-                acceptance = json.loads(acceptance_path.read_text(encoding="utf-8"))
-                if not acceptance.get("accepted") or any(acceptance.get(k) != manifest.get(k) for k in ("source_sha256", "provider", "original_manifest_sha256")):
-                    parser.error("Pilot acceptance failed or source/provider/scenes have changed")
+                if not args.skip_pilot_check:
+                    acceptance_path = args.pilot_dir / "pilot_acceptance.json"
+                    if not acceptance_path.exists():
+                        parser.error("An accepted real GPT-4o pilot is required, or explicitly use --skip-pilot-check")
+                    acceptance = json.loads(acceptance_path.read_text(encoding="utf-8"))
+                    if not acceptance.get("accepted") or any(acceptance.get(k) != manifest.get(k) for k in ("source_sha256", "provider", "original_manifest_sha256")):
+                        parser.error("Pilot acceptance failed or source/provider/scenes have changed")
+                else:
+                    connectivity_path = ROOT / "results/v1/gpt4o_preflight/connectivity.json"
+                    connectivity = json.loads(connectivity_path.read_text(encoding="utf-8"))
+                    if connectivity.get("status") != "completed" or connectivity.get("requested_model") != "gpt-4o" or connectivity.get("endpoint") != binding.base_url:
+                        parser.error("A successful real GPT-4o connectivity check for this endpoint is required")
+                    print("Operator waived remaining pilot validation; recorded in manifest.", flush=True)
             budget = GPT4oBudget(run_dir / "budget.sqlite", os.environ["GPT4O_MAX_COST_USD"])
         elif not os.getenv("DEEPSEEK_API_KEY"):
             parser.error("DEEPSEEK_API_KEY missing; existing environment/.env is reused")

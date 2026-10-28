@@ -49,3 +49,9 @@ Run from this repository with its isolated environment and ignored `.env` contai
 ```
 
 The pilot cap is fixed at $10 cumulative and includes the probe. Formal execution additionally requires accepted pilot evidence, unchanged source/config, and an explicit `GPT4O_MAX_COST_USD`. The final formal configuration table and pilot-based cost estimate must be presented before launch. Formal results use `results/v1/formal_80_seed42_gpt4o/`; original DeepSeek raw data are never overwritten.
+
+## Operator handoff
+
+The user subsequently stopped testing after four valid pilot episodes and requested a terminal command for formal execution. The runner now provides explicit `--skip-pilot-check`, recording the operator waiver in the formal manifest while retaining live connectivity verification and all model, scene, scoring and budget checks. This small launch-option change was not followed by more tests, as requested. The previous 26 focused checks and the completed real episode results are retained as evidence.
+
+The user selected **$100** as the cumulative formal cap. `scripts/manta/start_gpt4o_formal.ps1` writes that value and starts the unchanged 8-process, 160-episode formal configuration. It has not been launched by this chat. All future resumes use the same cumulative ledger.
