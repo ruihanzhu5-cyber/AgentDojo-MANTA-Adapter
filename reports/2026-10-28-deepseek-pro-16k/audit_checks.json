@@ -1,0 +1,21 @@
+{
+  "valid_episodes": 160,
+  "frozen_source_matches": true,
+  "actual_models": [
+    "deepseek-v4-pro"
+  ],
+  "request_output_limits": {
+    "16384": 3256
+  },
+  "completed_16k_requests_reconciled": 3255,
+  "budget_pending_requests": 0,
+  "execution_commits": [
+    "b185f27c87ed6f70703635feefe796245f1e956c"
+  ],
+  "adapter_digests": [
+    "04f5fed0dfb4e55ed7b2ac74d941e23f368528a58e3adccf5e2f7155b7d2ab7b"
+  ],
+  "manta_digests": [
+    "dfd20f12a55533c7e1915e4b50d4da32582773b13411a691cfdc7eef01c8ee42"
+  ]
+}

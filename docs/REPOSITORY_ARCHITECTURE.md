@@ -1,6 +1,8 @@
 # 仓库架构与阅读路线
 
-本仓库 `AgentDojo-MANTA-Adapter` 把 MANTA 多智能体执行层接入 AgentDojo 官方任务、工具、攻击与评分。复现实验以冻结场景为单位，模型通过独立 provider 配置选择。当前已有 DeepSeek、GPT-4o 两轮正式结果，以及后续 context/graph 机制实验。
+本仓库 `AgentDojo-MANTA-Adapter` 把 MANTA 多智能体执行层接入 AgentDojo 官方任务、工具、攻击与评分。复现实验以冻结场景为单位，模型通过独立 provider 配置选择。当前已有 DeepSeek、GPT-4o、DeepSeek Pro 16K 三轮正式结果，以及 context/graph 机制实验。
+
+DeepSeek Pro 相关入口：`src/agentdojo_manta/deepseek_pro.py` 保留 reasoning 工具历史，`budget.py` 提供 Pro 独立价格档案，`scripts/manta/start_deepseek_pro_16k.ps1` 为人工启动入口。16K 运行在独立工作树，预算与此前中断的 4K 批次共用累计 $100 台账；配置说明见 [PRO_16K.md](manta/PRO_16K.md)，结果和脱敏日志见 [本轮报告](../reports/2026-10-28-deepseek-pro-16k/README.md)。
 
 ## 目录结构
 
@@ -49,7 +51,8 @@ AgentDojo-MANTA-Adapter/
 │   ├── LOGS.md                       全部公开日志包索引
 │   ├── 2026-10-19-manta-agentdojo/    DeepSeek 正式结果与脱敏日志
 │   ├── 2026-10-19-context-mechanisms/ 历史 context / graph 实验报告与日志
-│   └── 2026-10-28-gpt4o-agentdojo/    GPT-4o 正式结果、配对比较、阶段报告、日志
+│   ├── 2026-10-28-gpt4o-agentdojo/    GPT-4o 正式结果、配对比较、阶段报告、日志
+│   └── 2026-10-28-deepseek-pro-16k/   Pro 16K 结果、三模型比较、脱敏日志与预算台账
 ├── results/v1/                       本机私有原始证据，Git 忽略
 │   ├── formal_80_seed42_gpt4o/       正式运行原始结果和完整 API 请求轨迹
 │   ├── pilot_4_seed42_gpt4o/         提前停止的 Pilot，与正式结果隔离

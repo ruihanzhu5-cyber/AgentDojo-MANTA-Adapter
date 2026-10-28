@@ -1,0 +1,57 @@
+{
+  "scope": "all retained DeepSeek Pro 16K formal logs",
+  "archives": [
+    {
+      "archive": "logs/formal-banking.tar.gz",
+      "files": 200,
+      "compressed_bytes": 6147392,
+      "raw_bytes": 51924987,
+      "sha256": "0f4d1089407fc22f0a24abbe1b72863ca272370a1256d34545c334abbc350730"
+    },
+    {
+      "archive": "logs/formal-control-and-resume.tar.gz",
+      "files": 6,
+      "compressed_bytes": 9296,
+      "raw_bytes": 76923,
+      "sha256": "897d191d6b82de83267f3500fab5863482c1ca234ca58dfce05ea574aa4cedbe"
+    },
+    {
+      "archive": "logs/formal-slack.tar.gz",
+      "files": 200,
+      "compressed_bytes": 7535451,
+      "raw_bytes": 70925339,
+      "sha256": "9a58bf46765d7b77bcd27995b41fdc07ca8ede6b4c6e069ec50d1cd788004519"
+    },
+    {
+      "archive": "logs/formal-travel.tar.gz",
+      "files": 200,
+      "compressed_bytes": 14247420,
+      "raw_bytes": 107609370,
+      "sha256": "0c5ac3e08411fb630b1c46b6a27b711ba2f975e572961d5455738ec957108a02"
+    },
+    {
+      "archive": "logs/formal-workspace.tar.gz",
+      "files": 200,
+      "compressed_bytes": 11912056,
+      "raw_bytes": 88697202,
+      "sha256": "e8698655cee549ccd7928fc0c696b2897c71d4f5167a4f2553b5e5fb8027e131"
+    }
+  ],
+  "replacements": {
+    "ENV_CREDENTIAL": 0,
+    "USER_HOME": 162,
+    "ACCOUNT": 75714,
+    "SENSITIVE_FIELD": 575,
+    "INLINE_SECRET": 4095,
+    "LONG_IDENTIFIER": 1485,
+    "PHONE": 1603,
+    "EMAIL": 110679
+  },
+  "raw_files_untouched": true,
+  "notes": [
+    "Credentials, local homes and synthetic contact/account secrets are redacted.",
+    "Metrics are computed on original logs before redaction.",
+    "Redacted copies do not preserve byte-exact prompts or judge inputs.",
+    "The separate shared budget export includes the interrupted 4K batch; its episodes are not included in 16K scores."
+  ]
+}

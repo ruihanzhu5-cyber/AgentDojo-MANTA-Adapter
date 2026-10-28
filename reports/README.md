@@ -7,6 +7,7 @@
 | 2026-10-19 MANTA × AgentDojo / DeepSeek | 80 场景，160/160 有效配对 episode | [报告入口](2026-10-19-manta-agentdojo/README.md) | [历史脱敏包](2026-10-19-manta-agentdojo/logs/) |
 | 2026-10-19 Context / Native Graph 机制实验 | 24 有效局部重放；12 个 capture 候选中 1 个合格状态，6 有效续跑 | [报告入口](2026-10-19-context-mechanisms/README.md) | [历史脱敏包](2026-10-19-context-mechanisms/logs/) |
 | 2026-10-28 MANTA × AgentDojo / GPT-4o | 原始相同 80 场景，160/160 有效配对 episode | [报告、配对表与案例](2026-10-28-gpt4o-agentdojo/README.md) | [本轮脱敏包](2026-10-28-gpt4o-agentdojo/logs/README.md) |
+| 2026-10-28 MANTA × AgentDojo / DeepSeek Pro 16K | 原始相同 80 场景，160/160 有效；输出上限 16384 | [报告与三模型比较](2026-10-28-deepseek-pro-16k/README.md) | [本轮脱敏包](2026-10-28-deepseek-pro-16k/logs/README.md) |
 
 **[全部公开日志压缩包索引](LOGS.md)** · [仓库架构](../docs/REPOSITORY_ARCHITECTURE.md) · [新适配层](../docs/manta/GPT4O_ADAPTER.md)
 

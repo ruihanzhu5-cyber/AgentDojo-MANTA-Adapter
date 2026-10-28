@@ -1,5 +1,7 @@
 # 全部公开实验日志
 
+DeepSeek Pro 16K 的全部正式日志见 [本轮日志索引](2026-10-28-deepseek-pro-16k/logs/README.md)，按 Banking、Slack、Travel、Workspace 和控制记录分包。逐文件原始/脱敏哈希见 [inventory](2026-10-28-deepseek-pro-16k/published_log_inventory.csv)，共享累计预算另见 [ledger](2026-10-28-deepseek-pro-16k/shared_budget_ledger.json)。
+
 公开日志统一通过本索引查找，各轮归档保持独立，避免混入其他实验分母。原始日志仅保留本地；下列均为脱敏副本。
 
 | 实验目录 | 压缩包 | 文件数 | 大小 |
