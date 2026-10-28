@@ -4,7 +4,7 @@ $originalProRoot = Join-Path (Split-Path $largeOutputRoot -Parent) 'gpt4o-replic
 $originalProRun = Join-Path $originalProRoot 'results/v1/formal_80_seed42_deepseek_pro'
 $originalPids = Join-Path $originalProRun 'active_pids.json'
 if (Test-Path -LiteralPath $originalPids) {
-    $runningIds = @(Get-Content -LiteralPath $originalPids -Raw | ConvertFrom-Json)
+    $runningIds = Get-Content -LiteralPath $originalPids -Raw | ConvertFrom-Json
     foreach ($proChildId in $runningIds) {
         if (Get-Process -Id ([int]$proChildId) -ErrorAction SilentlyContinue) {
             throw 'The original 4096-token run is still active. Press Ctrl+C in its terminal first.'
