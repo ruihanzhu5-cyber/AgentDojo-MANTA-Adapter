@@ -1,0 +1,18 @@
+{
+  "initial_root_patterns": {
+    "star": 47,
+    "chain": 110,
+    "singleton": 3
+  },
+  "executed_group_pattern_occurrences": {
+    "star": 60,
+    "chain": 135,
+    "voting": 1,
+    "debate": 12,
+    "singleton": 3
+  },
+  "repair_execution_episodes": 50,
+  "actual_spec_changed_episodes": 50,
+  "root_pattern_changed_episodes": 19,
+  "nested_group_episodes": 1
+}

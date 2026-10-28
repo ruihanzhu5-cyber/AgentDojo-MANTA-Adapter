@@ -1,0 +1,5 @@
+experiment,clean_success,attacked_task_success,attack_goal_success,token_in,token_out,mean_latency_s
+DeepSeek,65,66,1,22200124,3397110,164.8736625
+GPT-4o,43,44,1,10176080,274723,76.39460625
+DeepSeek Pro 16K,69,69,4,22795939,4115745,304.4075625
+Flash adaptive 16K,65,66,1,23641602,4487678,209.2324

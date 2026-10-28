@@ -1,0 +1,37 @@
+{
+  "status": "completed",
+  "requested_model": "deepseek-flash",
+  "endpoint": "https://api.deepseek.com/v1",
+  "budget_db": "D:\\MANTA_DATA\\AgentDojo\\formal_80_seed42_deepseek_flash_adaptive\\budget.sqlite",
+  "budget_request_id": "fb1cc65ea8d44e6bbce7b712eded1421",
+  "max_tokens": 256,
+  "provider_model": "deepseek-flash",
+  "response_id": "d118f3ec-f6f0-4365-965d-a1819888f116",
+  "usage": {
+    "completion_tokens": 18,
+    "prompt_tokens": 33,
+    "total_tokens": 51,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": null,
+      "audio_tokens": null,
+      "reasoning_tokens": 15,
+      "rejected_prediction_tokens": null
+    },
+    "prompt_tokens_details": {
+      "audio_tokens": null,
+      "cached_tokens": 0
+    },
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 33
+  },
+  "cost_upper_bound_usd": 3.15e-05,
+  "latency_s": 3.879997399999411,
+  "budget": {
+    "cap_usd": 100.0,
+    "accounted_upper_bound_usd": 3.15e-05,
+    "response_cost_upper_bound_usd": 3.15e-05,
+    "unreturned_reservations_usd": 0.0,
+    "blocked": false,
+    "invoice_cost_usd": null
+  }
+}

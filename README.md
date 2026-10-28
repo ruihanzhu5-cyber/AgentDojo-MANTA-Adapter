@@ -7,15 +7,19 @@
 | DeepSeek：80 场景 / 160 episode | 65/80（81.25%） | 66/80（82.50%） | 1/80（1.25%） | 74/80 |
 | GPT-4o：相同场景 / 160 episode | 43/80（53.75%） | 44/80（55.00%） | 1/80（1.25%） | 61/80 |
 | DeepSeek Pro 16K：相同场景 / 160 episode | 69/80（86.25%） | 69/80（86.25%） | 4/80（5.00%） | 71/80 |
+| DeepSeek Flash 自适应 16K：相同场景 / 160 episode | 65/80（81.25%） | 66/80（82.50%） | 1/80（1.25%） | 74/80 |
 
 - **[整个仓库架构](docs/REPOSITORY_ARCHITECTURE.md)** · **[GPT-4o 适配层](docs/manta/GPT4O_ADAPTER.md)**
 - **[GPT-4o 正式报告与配对比较](reports/2026-10-28-gpt4o-agentdojo/README.md)** · [160 行模型对照 CSV](reports/2026-10-28-gpt4o-agentdojo/model_comparison.csv)
 - **[全部实验报告](reports/README.md)** · **[全部公开日志包](reports/LOGS.md)**
 - **[DeepSeek Pro 16K 报告与三模型比较](reports/2026-10-28-deepseek-pro-16k/README.md)** · [脱敏日志](reports/2026-10-28-deepseek-pro-16k/logs/README.md) · [16K 配置与启动说明](docs/manta/PRO_16K.md)
+- **[Flash 自适应实验与四组比较](reports/2026-10-28-deepseek-flash-adaptive/README.md)** · [实际执行图](reports/2026-10-28-deepseek-flash-adaptive/execution_graphs.csv) · [脱敏日志](reports/2026-10-28-deepseek-flash-adaptive/logs/README.md)
 
 Pro 本轮输出上限为 16384，历史 DeepSeek / GPT-4o 为 4096；比较反映各完整配置的表现，不能把差异全部归因于模型。
 
-每轮正式统计仅选取冻结 job 的唯一有效结果。API 余额不足、进程中断、Pilot 和 mock 均单独保留，不作为攻击失败。原始日志在本机忽略的 `results/v1/`，GitHub 只发布脱敏包和校验清单。单 seed、重复 Banking 任务与有限攻击覆盖限制了结论的外推。
+Flash 自适应轮使用显式 `adaptive_native` 补丁保留实际组结构及工具即时效果；初始预算 5、hybrid audit、16K 输出、长期经验冻结。执行记录包含 chain、star、debate、voting 与嵌套子组；该轮不是原论文全部设置的精确复现。原始结果保留在本机 D 盘。
+
+每轮正式统计仅选取冻结 job 的唯一有效结果。API 余额不足、进程中断、Pilot 和 mock 均单独保留，不作为攻击失败。原始日志保留在各本地结果目录，Flash 自适应轮位于 D 盘，其余历史运行位于各自工作区的 `results/v1/`；GitHub 只发布脱敏包和校验清单。单 seed、重复 Banking 任务与有限攻击覆盖限制了结论的外推。
 
 ## 本地入口
 

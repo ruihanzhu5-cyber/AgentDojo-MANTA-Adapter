@@ -1,0 +1,57 @@
+{
+  "scope": "all retained adaptive Flash files",
+  "archives": [
+    {
+      "archive": "logs/formal-banking.tar.gz",
+      "files": 200,
+      "compressed_bytes": 7560693,
+      "sha256": "20e795ec5599bced50a837184aa9d03c2582cc461ff8ad20c62d1acfa4876473"
+    },
+    {
+      "archive": "logs/formal-control-and-resume.tar.gz",
+      "files": 7,
+      "compressed_bytes": 183840,
+      "sha256": "ee796ef293c3815b3d50b2d87f21829cbc9756cd622a5f5949b45fd97534ca24"
+    },
+    {
+      "archive": "logs/formal-slack.tar.gz",
+      "files": 200,
+      "compressed_bytes": 7256740,
+      "sha256": "bac5fa4b54dde42010c806f36e2a2f7a891458b1cdf90ba3f1f1ceab4c3fd206"
+    },
+    {
+      "archive": "logs/formal-travel.tar.gz",
+      "files": 200,
+      "compressed_bytes": 15017652,
+      "sha256": "56cca2c5498b20a7db4d76968d2784993a2a949d2ede62b35b165c9443bd8f5f"
+    },
+    {
+      "archive": "logs/formal-workspace.tar.gz",
+      "files": 200,
+      "compressed_bytes": 16295657,
+      "sha256": "c5af2f0ff1e079dd914f3cfa11bcb2cfada5c3918e2b5f5dd3d5d11f55950e06"
+    }
+  ],
+  "replacements": {
+    "ENV_CREDENTIAL": 0,
+    "USER_HOME": 160,
+    "ACCOUNT": 14852,
+    "SENSITIVE_FIELD": 957,
+    "LONG_IDENTIFIER": 373,
+    "INLINE_SECRET": "<REDACTED_SENSITIVE_FIELD>",
+    "PHONE": "<REDACTED_SENSITIVE_FIELD>",
+    "EMAIL": 17673
+  },
+  "text_cache": {
+    "hits": 1707343,
+    "misses": 40684,
+    "maxsize": 8192,
+    "currsize": 8192
+  },
+  "replacement_counter_note": "Text substitutions counted on unique-string cache misses; sensitive fields counted per visit.",
+  "raw_files_untouched": true,
+  "notes": [
+    "Credentials, home paths and synthetic contact/account secrets are redacted.",
+    "Scores and topology metrics are computed on original evidence; public copies are not byte-exact judge inputs."
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "valid_episodes": 160,
+  "official_trace_matches": 160,
+  "original_scene_and_payload_checks": 80,
+  "frozen_source_matches": true,
+  "source_sha256": "7d4de625651080016c0c79689473b2c8aa8263a0e2346322a15a58b4de856c64",
+  "adapter_digest": "f80f3a3ec5be2cb9201b691a2f373877a00ea34b92e5e8d2aac3a3ed7a329459",
+  "manta_digest": "2c62595306940c01a517d805f90e97397b07ab95991d29b436e5911877e62e9f",
+  "execution_commits": [
+    "b61ad08458a21c35b9255a4dc6b5224831b3b333"
+  ],
+  "actual_response_models": {
+    "deepseek-flash": 3293
+  },
+  "request_output_limits": {
+    "16384": 3296
+  },
+  "completed_requests_reconciled": 3293,
+  "connectivity_reconciled": true,
+  "budget_pending_requests": 0,
+  "journal_errors": {
+    "APIConnectionError": 3
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "clean": {
+    "both_success": 58,
+    "both_fail": 8,
+    "baseline_only_success": 7,
+    "adaptive_only_success": 7
+  },
+  "attack": {
+    "both_success": 61,
+    "both_fail": 9,
+    "baseline_only_success": 5,
+    "adaptive_only_success": 5
+  }
+}

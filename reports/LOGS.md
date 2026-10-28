@@ -1,5 +1,7 @@
 # 全部公开实验日志
 
+Flash 自适应轮的全部正式日志见 [本轮日志索引](2026-10-28-deepseek-flash-adaptive/logs/README.md)，实际逐轮图与阶段顺序见 [execution_graphs.csv](2026-10-28-deepseek-flash-adaptive/execution_graphs.csv)，原始/脱敏哈希见 [inventory](2026-10-28-deepseek-flash-adaptive/published_log_inventory.csv)。原始文件保留在本机 D 盘。
+
 DeepSeek Pro 16K 的全部正式日志见 [本轮日志索引](2026-10-28-deepseek-pro-16k/logs/README.md)，按 Banking、Slack、Travel、Workspace 和控制记录分包。逐文件原始/脱敏哈希见 [inventory](2026-10-28-deepseek-pro-16k/published_log_inventory.csv)，共享累计预算另见 [ledger](2026-10-28-deepseek-pro-16k/shared_budget_ledger.json)。
 
 公开日志统一通过本索引查找，各轮归档保持独立，避免混入其他实验分母。原始日志仅保留本地；下列均为脱敏副本。
