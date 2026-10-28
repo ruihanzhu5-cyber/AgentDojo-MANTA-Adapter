@@ -200,6 +200,7 @@ def main() -> int:
         "attack": args.attack,
         "condition": condition,
         "model": pipeline.model,
+        "max_output_tokens": int(os.getenv("OPENROUTER_MAX_TOKENS", "4096")),
         "provider": os.getenv("MANTA_PROVIDER", "deepseek"),
         "metric_schema_version": "2",
         "run_id": run_id,

@@ -91,6 +91,8 @@ def main():
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--limit", type=int, help="Smoke-only episode limit")
     parser.add_argument("--max-attempts", type=int, default=2)
+    parser.add_argument("--max-output-tokens", type=int, default=4096)
+    parser.add_argument("--budget-db", type=Path, default=None, help="Explicit shared Pro cumulative ledger")
     args = parser.parse_args()
     if args.parallelism is None:
         args.parallelism = 1 if args.pilot else 8
@@ -103,6 +105,10 @@ def main():
     provider = os.getenv("MANTA_PROVIDER", "deepseek")
     gpt4o = provider != "deepseek"
     pro = provider == "deepseek" and os.getenv("DEEPSEEK_MODEL") == "deepseek-v4-pro"
+    if not 1 <= args.max_output_tokens <= 393216 or (not pro and args.max_output_tokens != 4096):
+        parser.error("Output override is supported only for Pro, within 1..393216")
+    if args.budget_db is not None and not pro:
+        parser.error("Shared external ledger option is Pro-only")
     if args.pilot and (not gpt4o or args.smoke):
         parser.error("--pilot requires a real GPT-4o provider; mock pilot is forbidden")
     if args.run_dir is None:
@@ -148,6 +154,11 @@ def main():
         manifest["jobs"] = [jobs[offset + index] for index in range(40)
                             for offset in range(0, 160, 40)][:args.limit]
     run_dir = args.run_dir.resolve()
+    if pro:
+        if args.max_output_tokens != 4096 and run_dir == (ROOT / "results/v1/formal_80_seed42_deepseek_pro").resolve():
+            parser.error("Changed output limit requires a separate run directory")
+        manifest["max_output_tokens"] = args.max_output_tokens
+        manifest["budget_db"] = str((args.budget_db or run_dir / "budget.sqlite").resolve())
     if pro and run_dir in {(ROOT / "results/v1/formal_80_seed42").resolve(), (ROOT / "results/v1/formal_80_seed42_gpt4o").resolve()}:
         parser.error("Pro must use a separate result directory")
     if gpt4o and run_dir == (ROOT / "results/v1/formal_80_seed42").resolve():
@@ -230,7 +241,7 @@ def main():
                 probe = json.loads(probe_path.read_text(encoding="utf-8")) if probe_path.exists() else {}
                 if probe.get("status") != "completed" or probe.get("requested_model") != "deepseek-v4-pro":
                     parser.error("Run probe_deepseek_pro.py successfully before starting Pro episodes")
-            budget = budget_class(run_dir / "budget.sqlite", os.environ["V1_MAX_COST_USD"])
+            budget = budget_class(args.budget_db or run_dir / "budget.sqlite", os.environ["V1_MAX_COST_USD"])
         with budget.connect() as db:
             # Previous launcher may have lost a response. Retain the reservation.
             db.execute("UPDATE requests SET state='uncertain' WHERE state='pending'")
@@ -283,6 +294,7 @@ def main():
                     env["V1_BUDGET_DB"] = budget.path
                     if pro:
                         env["V1_REQUEST_JOURNAL"] = str(attempt / "requests.jsonl")
+                        env["OPENROUTER_MAX_TOKENS"] = str(args.max_output_tokens)
             else:
                 env.pop("V1_BUDGET_DB", None)
             with (attempt / "console.log").open("w", encoding="utf-8") as console:
