@@ -1,0 +1,14 @@
+{
+  "raw_files_untouched": true,
+  "selected_file_count": 480,
+  "replacement_counts_cumulative": {
+    "ENV_CREDENTIAL": 0,
+    "ACCOUNT": 4143,
+    "SENSITIVE_FIELD": 208,
+    "INLINE_SECRET": "<REDACTED_SENSITIVE_FIELD>",
+    "PHONE": "<REDACTED_SENSITIVE_FIELD>",
+    "LONG_IDENTIFIER": 262,
+    "EMAIL": 17157
+  },
+  "note": "Counters are cumulative across this export; cached identical strings counted once. Credentials, home paths, synthetic contact/account secrets redacted; scores/tokens unchanged."
+}

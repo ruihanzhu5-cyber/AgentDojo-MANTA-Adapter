@@ -1,0 +1,8 @@
+run,raw_root,manifest,summary,result_pattern,official_trace_pattern
+flash_star,D:\AgentDojo-MANTA-Adapter\results\v1\formal_80_seed42,manifest.json,summary.json,attempts/<job_id>/<attempt>/result.json,logs/<job_id>/<attempt>/**/*.json
+gpt4o_star,<WORKSPACE>/gpt4o-replication/results/v1/formal_80_seed42_gpt4o,manifest.json,summary.json,attempts/<job_id>/<attempt>/result.json,logs/<job_id>/<attempt>/**/*.json
+pro16k_star,<WORKSPACE>/deepseek-pro-16k/results/v1/formal_80_seed42_deepseek_pro_16k,manifest.json,summary.json,attempts/<job_id>/<attempt>/result.json,logs/<job_id>/<attempt>/**/*.json
+flash16k_adaptive,D:\MANTA_DATA\AgentDojo\formal_80_seed42_deepseek_flash_adaptive,manifest.json,summary.json,attempts/<job_id>/<attempt>/result.json,logs/<job_id>/<attempt>/**/*.json
+folded_initial,D:\MANTA_DATA\AgentDojo\formal_80_seed42_deepseek_flash_folded,manifest.json,summary.json,attempts/<job_id>/<attempt>/result.json,logs/<job_id>/<attempt>/**/*.json
+F,D:\MANTA_DATA\AgentDojo\ablation_fw_flash16k_seed42\F,manifest.json,summary.json,attempts/<job_id>/<attempt>/result.json,logs/<job_id>/<attempt>/**/*.json
+W,D:\MANTA_DATA\AgentDojo\ablation_fw_flash16k_seed42\W,manifest.json,summary.json,attempts/<job_id>/<attempt>/result.json,logs/<job_id>/<attempt>/**/*.json

@@ -1,5 +1,18 @@
 # 全部公开实验日志
 
+最新 7 次完整正式运行的原始目录统一见 [log_locations.csv](2026-10-29-completed-experiments/log_locations.csv)，结果比较见 [正式汇总](2026-10-29-completed-experiments/README.md)。最近的 F 首次运行及 F/W 原始日志保留在 D 盘；2026-10-29 正式脱敏包见下表。历史包清单保持原样。
+
+## 2026-10-29 新增正式日志
+
+| 实验日期 | 正式实验 | 有效记录 | 日志与校验 |
+|---|---|---:|---|
+| 2026-10-29 | Flash 16K Folded 首轮（重复参考） | 160 | [4 个 suite 包、报告与哈希](2026-10-29-agentdojo-flash16k-folded/README.md) |
+| 2026-10-29 | Flash 16K F/W 调度对照 | F 160 + W 160 | [8 个分组 suite 包、配对与哈希](2026-10-29-agentdojo-flash16k-fw/README.md) |
+
+每个包包含正式有效 episode 的 `result.json`、`requests.jsonl` 与官方评分轨迹；包括任务失败和资源终止结果。探测、smoke/pilot、重复 console/queue 和无效尝试轨迹不上传；无效尝试用量及共同预算汇总保留披露。全部压缩包按实际实验日期、组别和 suite 命名。
+
+## 历史公开归档
+
 Flash 自适应轮的全部正式日志见 [本轮日志索引](2026-10-28-deepseek-flash-adaptive/logs/README.md)，实际逐轮图与阶段顺序见 [execution_graphs.csv](2026-10-28-deepseek-flash-adaptive/execution_graphs.csv)，原始/脱敏哈希见 [inventory](2026-10-28-deepseek-flash-adaptive/published_log_inventory.csv)。原始文件保留在本机 D 盘。
 
 DeepSeek Pro 16K 的全部正式日志见 [本轮日志索引](2026-10-28-deepseek-pro-16k/logs/README.md)，按 Banking、Slack、Travel、Workspace 和控制记录分包。逐文件原始/脱敏哈希见 [inventory](2026-10-28-deepseek-pro-16k/published_log_inventory.csv)，共享累计预算另见 [ledger](2026-10-28-deepseek-pro-16k/shared_budget_ledger.json)。

@@ -1,0 +1,74 @@
+[
+  {
+    "run": "F",
+    "suite": "banking",
+    "archive": "logs/2026-10-29_agentdojo_flash16k_fw-F-on-demand_banking_valid.tar.gz",
+    "episodes": 40,
+    "files": 120,
+    "compressed_bytes": 1085259,
+    "sha256": "a35d64f38a61b4fc83be1c120fc10494bb977e5416e02c0cfd277310976b8a80"
+  },
+  {
+    "run": "F",
+    "suite": "slack",
+    "archive": "logs/2026-10-29_agentdojo_flash16k_fw-F-on-demand_slack_valid.tar.gz",
+    "episodes": 40,
+    "files": 120,
+    "compressed_bytes": 1602053,
+    "sha256": "1f3e4725c50c2d61c5cc56a6e281531d14066eee84b8956330f5f243ba51cad3"
+  },
+  {
+    "run": "F",
+    "suite": "travel",
+    "archive": "logs/2026-10-29_agentdojo_flash16k_fw-F-on-demand_travel_valid.tar.gz",
+    "episodes": 40,
+    "files": 120,
+    "compressed_bytes": 1173988,
+    "sha256": "63aa6b2c598594f18fb39778351c3f524e909311fedc68e57b6c67f09a69e674"
+  },
+  {
+    "run": "F",
+    "suite": "workspace",
+    "archive": "logs/2026-10-29_agentdojo_flash16k_fw-F-on-demand_workspace_valid.tar.gz",
+    "episodes": 40,
+    "files": 120,
+    "compressed_bytes": 2230829,
+    "sha256": "9ca9caddbd6ab9dfbc1c3b98c8606a1024821b2d0b62ee3c7c8c1f7d5b29d197"
+  },
+  {
+    "run": "W",
+    "suite": "banking",
+    "archive": "logs/2026-10-29_agentdojo_flash16k_fw-W-fixed-two_banking_valid.tar.gz",
+    "episodes": 40,
+    "files": 120,
+    "compressed_bytes": 2570129,
+    "sha256": "a758916b42bb8b28f99263651c8661f130ecca7b9aedb8036049addae2f05b50"
+  },
+  {
+    "run": "W",
+    "suite": "slack",
+    "archive": "logs/2026-10-29_agentdojo_flash16k_fw-W-fixed-two_slack_valid.tar.gz",
+    "episodes": 40,
+    "files": 120,
+    "compressed_bytes": 3310299,
+    "sha256": "226450f05048e922d43c3eddd9f630aaaa264f53df7472fe05261938b17321ca"
+  },
+  {
+    "run": "W",
+    "suite": "travel",
+    "archive": "logs/2026-10-29_agentdojo_flash16k_fw-W-fixed-two_travel_valid.tar.gz",
+    "episodes": 40,
+    "files": 120,
+    "compressed_bytes": 2481108,
+    "sha256": "9a508b9d92ae1195797d7d5bfcd65d03d9c00435185ae05e6089a34a232eba9e"
+  },
+  {
+    "run": "W",
+    "suite": "workspace",
+    "archive": "logs/2026-10-29_agentdojo_flash16k_fw-W-fixed-two_workspace_valid.tar.gz",
+    "episodes": 40,
+    "files": 120,
+    "compressed_bytes": 3750446,
+    "sha256": "299abbe3d980cfef760bc7272fdd2dc7abd67d4e8ec2c59c92692e941778fa6c"
+  }
+]

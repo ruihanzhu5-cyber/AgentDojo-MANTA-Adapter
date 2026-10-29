@@ -1,0 +1,85 @@
+{
+  "date": "2026-10-29",
+  "reviewer": "/root/review_completed_summary",
+  "record_format": "Normalized record of independent read-only result-to-claim review",
+  "claim_supported": "yes",
+  "claim_scope": "仅限这批冻结场景上的描述性比较，不包含统计显著性、单模块因果效果或一般安全保证。",
+  "what_results_support": [
+    "6种配置、7次完整运行、1120条有效episode；每次相同80场景、80 clean与80 attack、76个不同用户任务。F首次运行仅为重复参考。",
+    "相对原Flash 16K自适应，F/W观测token分别减少74.62448%/53.27949%，攻击下完成数66→71/75，安全完成数65→71/75。",
+    "W比F多6004191 token（84.11645%），攻击下4个W-only、0个F-only；clean有3个W-only、2个F-only。",
+    "F/W官方攻击成功均0/80，各76条确认暴露、4条UNKNOWN。",
+    "安全完成采用utility=True且security=False的联合事件。Pro安全完成66/80，不能用69减4。",
+    "模块表求和完整；F到W的worker token增加5562096，占净增量92.6369%，main增加442467，verifier减少372。",
+    "F实际worker上下文2个，W为320个，W覆盖全部160个episode。"
+  ],
+  "what_results_dont_support": [
+    "不能将历史系统到F/W的改善单独归因于调度、缓存、门控等某一模块。",
+    "W包含固定双worker及main分派/汇报协议变化，不能当作仅worker数量的纯消融。",
+    "不支持统计显著、跨seed/任务/攻击族的稳定优越性或一般安全保证。",
+    "没有等算力单agent对照；token和单条平均耗时不等于账单和整轮加速。"
+  ],
+  "missing_evidence": [
+    "未提供独立EXPERIMENT_AUDIT.json。",
+    "缺少跨seed、任务集合和攻击族的推广证据；首次F不是多seed平均。",
+    "缺少隔离各模块及协议变化贡献的证据。",
+    "F/W各4条暴露UNKNOWN。",
+    "本汇总不计算无效尝试、探测、未返回请求的全部资源成本。"
+  ],
+  "suggested_claim_revision": "在相同80个冻结场景、seed42和direct攻击条件下，完整改造系统F/W的有效episode观测token分别比历史Flash 16K自适应少74.62%/53.28%，攻击下完成数从66/80提高至71/80和75/80。W相对F多完成4个攻击下任务，token增加84.12%，体现当前样本上的资源/完成率取舍。F/W的0/80官方ASR不是一般安全保证。",
+  "confidence": "medium",
+  "integrity_status": "unavailable",
+  "integrity_label": "provisional — no integrity audit run",
+  "verification_scope": {
+    "review_mode": "独立只读复核",
+    "new_experiments_run": false,
+    "network_or_api_probes_run": false,
+    "files_modified": false,
+    "checks_completed": [
+      "重算1120条导出episode与7行总表。",
+      "核对160条F/W配对与分suite结果。",
+      "核对各角色token和请求数求和。",
+      "核对7份原始manifest哈希及160个冻结job身份一致。",
+      "抽查13条原始result及official trace的哈希、评分、有效性、非mock与token求和。",
+      "确认F/W源代码digest一致。",
+      "核对修订后的UNKNOWN和资源终止计数。"
+    ],
+    "raw_evidence_limit": "独立复核只对13条原result/trace定向抽查，未独立遍历全部原轨迹或重执行评分器；汇总脚本对全部1120条做匹配。"
+  },
+  "issues": [
+    {
+      "id": "exposure_unknown_count",
+      "status": "resolved",
+      "resolution": "UNKNOWN计数修订为6、19、9、6、6、4、4。"
+    },
+    {
+      "id": "resource_limit_count",
+      "status": "resolved",
+      "resolution": "按episode_resource_limit统计，首次F/F/W分别2/2/3。"
+    },
+    {
+      "id": "legacy_nonapplicable_metrics",
+      "status": "resolved",
+      "resolution": "历史引擎不适用指标用空值。"
+    },
+    {
+      "id": "statistical_wording",
+      "status": "resolved",
+      "resolution": "显著改为大幅。"
+    },
+    {
+      "id": "main_overhead_causality",
+      "status": "resolved",
+      "resolution": "main新增token不隔离分派与汇报因果。"
+    },
+    {
+      "id": "exposure_denominator_disclosure",
+      "status": "resolved_after_review",
+      "resolution": "正文已补各76条确认暴露、4条UNKNOWN，ASR仍用官方80分母。"
+    }
+  ],
+  "next_experiments_needed": {
+    "action": "none",
+    "reason": "按用户要求，本次只记录证据缺口，不设计或启动新实验；当前描述性汇总不以补实验为完成条件。"
+  }
+}

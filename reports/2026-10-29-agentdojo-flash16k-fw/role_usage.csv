@@ -1,0 +1,7 @@
+run,role,token_in,token_out,total_tokens,requests
+F,action_verifier,186255,77237,263492,196
+F,main,6396021,393202,6789223,1336
+F,worker,80500,4736,85236,12
+W,action_verifier,192544,70576,263120,190
+W,main,6723803,507887,7231690,1082
+W,worker,5146783,500549,5647332,1620

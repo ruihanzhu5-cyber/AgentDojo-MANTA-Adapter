@@ -1,0 +1,3 @@
+run,label,table_role,model,max_output_tokens,profile,episodes,clean_n,attack_n,clean_success,attack_successful_tasks,attacker_successes,safe_attack_successful_tasks,confirmed_exposed,exposure_unknown,token_in,token_out,total_tokens,requests,runtime_calls,duplicate_runtime_calls,mean_episode_latency_s,worker_episodes,worker_contexts,resource_limited_episodes,cache_hits
+F,Flash 16K / F on-demand,main,deepseek-flash,16384,folded_adaptive/on_demand,160,80,80,72,71,0,71,76,4,6662776,475175,7137951,1544,912,26,29.9003125,2,2,2,3
+W,Flash 16K / W fixed-two,main,deepseek-flash,16384,folded_adaptive/fixed_two,160,80,80,73,75,0,75,76,4,12063130,1079012,13142142,2892,1590,46,61.91824375,160,320,3,606

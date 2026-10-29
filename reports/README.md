@@ -1,16 +1,22 @@
-# 实验报告与日志总入口
+# 正式实验结果入口
 
-本目录统一收纳可公开的实验报告、配置、结构化指标和脱敏日志包。原始证据保留在各轮本地结果目录，Flash 自适应轮位于 D 盘，其余历史运行位于各自工作区的 `results/v1/`；旧报告及其发布哈希保持原样。
+**[最新统一汇总（2026-10-29）](2026-10-29-completed-experiments/README.md)** 收录 6 种有效正式配置；F 的首次完整运行作为重复参考。共 7 次完整运行、1,120 条有效结果，同一批 80 场景、76 个不同用户任务。
+只把完整正式配置放在比较主表，诊断和未完成跑次不进入排名。
 
-| 实验 | 范围与状态 | 报告 | 日志 |
-|---|---|---|---|
-| 2026-10-19 MANTA × AgentDojo / DeepSeek | 80 场景，160/160 有效配对 episode | [报告入口](2026-10-19-manta-agentdojo/README.md) | [历史脱敏包](2026-10-19-manta-agentdojo/logs/) |
-| 2026-10-19 Context / Native Graph 机制实验 | 24 有效局部重放；12 个 capture 候选中 1 个合格状态，6 有效续跑 | [报告入口](2026-10-19-context-mechanisms/README.md) | [历史脱敏包](2026-10-19-context-mechanisms/logs/) |
-| 2026-10-28 MANTA × AgentDojo / GPT-4o | 原始相同 80 场景，160/160 有效配对 episode | [报告、配对表与案例](2026-10-28-gpt4o-agentdojo/README.md) | [本轮脱敏包](2026-10-28-gpt4o-agentdojo/logs/README.md) |
-| 2026-10-28 MANTA × AgentDojo / DeepSeek Pro 16K | 原始相同 80 场景，160/160 有效；输出上限 16384 | [报告与三模型比较](2026-10-28-deepseek-pro-16k/README.md) | [本轮脱敏包](2026-10-28-deepseek-pro-16k/logs/README.md) |
-| 2026-10-28 MANTA × AgentDojo / Flash 自适应 16K | 原始相同 80 场景，160/160 有效；真实执行图与 50 次修复 | [报告与四组比较](2026-10-28-deepseek-flash-adaptive/README.md) | [本轮脱敏包](2026-10-28-deepseek-flash-adaptive/logs/README.md) |
-| 2026-10-28 四组联合分析（未新增实验） | 四种配置、640 条有效记录；共同资源与安全机制 | [统一分析与证据边界](2026-10-28-four-experiment-analysis/README.md) | [640 条特征](2026-10-28-four-experiment-analysis/episode_features.csv)、各轮原日志入口见报告 |
+| 正式配置 | 有效记录 | 报告与结果 |
+|---|---:|---|
+| Flash 4K / Star | 160 | [原始报告](2026-10-19-manta-agentdojo/README.md) |
+| GPT-4o 4K / Star | 160 | [原始报告](2026-10-28-gpt4o-agentdojo/README.md) |
+| Pro 16K / Star | 160 | [原始报告](2026-10-28-deepseek-pro-16k/README.md) |
+| Flash 16K / 原自适应 | 160 | [原始报告](2026-10-28-deepseek-flash-adaptive/README.md) |
+| Flash 16K / F 按需调查 | 160 | [正式报告与日志](2026-10-29-agentdojo-flash16k-fw/README.md)、[F/W 配对](2026-10-29-completed-experiments/fw_paired.csv) |
+| Flash 16K / W 固定双调查者 | 160 | [正式报告与日志](2026-10-29-agentdojo-flash16k-fw/README.md)、[F/W 配对](2026-10-29-completed-experiments/fw_paired.csv) |
 
-**[全部公开日志压缩包索引](LOGS.md)** · [仓库架构](../docs/REPOSITORY_ARCHITECTURE.md) · [新适配层](../docs/manta/GPT4O_ADAPTER.md)
+[F 首次运行的正式脱敏日志](2026-10-29-agentdojo-flash16k-folded/README.md) 另有 160 条有效结果，作为重复参考保留在 [总表](2026-10-29-completed-experiments/overview.csv) 的 `repeat_reference` 行；不当成另一种方法。
 
-读取结果时按每轮冻结 manifest 匹配场景。失败、中断、mock 和 Pilot 是保留证据的一部分，但不进入正式有效评分分母。`security=True` 表示攻击者目标达成；暴露 UNKNOWN 不能解释为未暴露。
+- [逐场景指标：1,120 行](2026-10-29-completed-experiments/episode_results.csv)
+- [分 suite 结果](2026-10-29-completed-experiments/by_suite.csv)、[角色模块用量](2026-10-29-completed-experiments/role_usage.csv)
+- [统一原始日志位置索引](2026-10-29-completed-experiments/log_locations.csv)、[原始结果与官方评分日志哈希](2026-10-29-completed-experiments/source_inventory.json)
+- [全部公开脱敏包](LOGS.md)：2026-10-29 新增 F 首轮及 F/W 的 480 条有效正式日志；原始文件仍在 D 盘。
+
+旧报告和发布校验值保持原样；[旧四组联合分析](2026-10-28-four-experiment-analysis/README.md) 可作历史参考。正式结果只选冻结 manifest 中唯一有效、非 mock 的结果，基础设施失败不混入任务分母。`security=True` 表示攻击者目标达成；暴露 UNKNOWN 不等于未暴露。

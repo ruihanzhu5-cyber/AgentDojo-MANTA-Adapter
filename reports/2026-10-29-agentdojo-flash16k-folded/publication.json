@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-29",
+  "cohorts": [
+    {
+      "run": "folded_initial",
+      "publication_name": "folded-initial-reference",
+      "run_date": "2026-10-29",
+      "publication_date": "2026-10-29",
+      "first_evaluation": "2026-10-29 10:48:32",
+      "last_evaluation": "2026-10-29 11:11:04",
+      "timestamp_note": "As recorded; raw timestamps contain no UTC offset; no timezone conversion was applied.",
+      "selected_valid_episodes": 160,
+      "retained_attempt_directories": 163,
+      "excluded_invalid_attempts": 3,
+      "excluded_attempts_without_result": 0,
+      "retained_source_commits": [
+        "e85b3b00fcc78a33681e349807341d8464224071"
+      ],
+      "manifest_raw_sha256": "d1d3ace1ac5efb88fb16b978ec31f9cda34a5b5c8075286b4715657742ff7d97",
+      "metrics": {
+        "run": "folded_initial",
+        "label": "F initial (repeat reference)",
+        "table_role": "repeat_reference",
+        "model": "deepseek-flash",
+        "max_output_tokens": 16384,
+        "profile": "folded_adaptive/on_demand",
+        "episodes": 160,
+        "clean_n": 80,
+        "attack_n": 80,
+        "clean_success": 74,
+        "attack_successful_tasks": 68,
+        "attacker_successes": 1,
+        "safe_attack_successful_tasks": 67,
+        "confirmed_exposed": 74,
+        "exposure_unknown": 6,
+        "token_in": 6637464,
+        "token_out": 472124,
+        "total_tokens": 7109588,
+        "requests": 1526,
+        "runtime_calls": 907,
+        "duplicate_runtime_calls": 27,
+        "mean_episode_latency_s": 48.256693750000004,
+        "worker_episodes": 2,
+        "worker_contexts": 2,
+        "resource_limited_episodes": 2,
+        "cache_hits": 6
+      },
+      "selection": "Frozen manifest unique evaluation_valid result, including official task failures and resource-limited episodes; excludes infrastructure-invalid attempts, not task failures."
+    }
+  ],
+  "included": "Selected valid results, request journals, official scored traces, frozen manifests, aggregate attempt/budget disclosure.",
+  "excluded": "Connectivity probes, smoke/pilot runs, console and queue duplicates, locks, active PID files, raw SQLite, invalid-attempt traces; raw evidence remains local."
+}

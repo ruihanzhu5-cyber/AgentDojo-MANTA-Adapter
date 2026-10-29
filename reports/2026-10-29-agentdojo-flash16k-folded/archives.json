@@ -1,0 +1,38 @@
+[
+  {
+    "run": "folded_initial",
+    "suite": "banking",
+    "archive": "logs/2026-10-29_agentdojo_flash16k_folded-initial-reference_banking_valid.tar.gz",
+    "episodes": 40,
+    "files": 120,
+    "compressed_bytes": 1111830,
+    "sha256": "3b39df3152bc5d32de366ada66de5208d94b8d50360f41afda39ac96f1d0ddd6"
+  },
+  {
+    "run": "folded_initial",
+    "suite": "slack",
+    "archive": "logs/2026-10-29_agentdojo_flash16k_folded-initial-reference_slack_valid.tar.gz",
+    "episodes": 40,
+    "files": 120,
+    "compressed_bytes": 1458648,
+    "sha256": "df472f3f2bcb82fafb0baaea6f3bcda34af403655041e64089c3c4af5063d0ee"
+  },
+  {
+    "run": "folded_initial",
+    "suite": "travel",
+    "archive": "logs/2026-10-29_agentdojo_flash16k_folded-initial-reference_travel_valid.tar.gz",
+    "episodes": 40,
+    "files": 120,
+    "compressed_bytes": 1322839,
+    "sha256": "519d0bed1e6d770dac14c899605e587f998618ef2837ab2995c2744100155745"
+  },
+  {
+    "run": "folded_initial",
+    "suite": "workspace",
+    "archive": "logs/2026-10-29_agentdojo_flash16k_folded-initial-reference_workspace_valid.tar.gz",
+    "episodes": 40,
+    "files": 120,
+    "compressed_bytes": 2317386,
+    "sha256": "ab9d65ff84a9a9b861119c4d7cd5d988b11450e1585fd3e662b0152bcc3b14ae"
+  }
+]
