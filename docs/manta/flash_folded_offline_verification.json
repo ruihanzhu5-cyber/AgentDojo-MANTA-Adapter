@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-29",
+  "status": "OFFLINE_ONLY_PASSED",
+  "branch": "codex/manta-folded-flash16k",
+  "base_commit": "9ce70a3c5",
+  "new_unit_checks": 16,
+  "legacy_execution_checks": 2,
+  "powershell_syntax": "passed",
+  "whitespace_check": "passed",
+  "frozen_scenes": 80,
+  "frozen_jobs": 160,
+  "scene_and_payload_parity": "identical",
+  "dry_run_network": "socket connections explicitly disabled",
+  "source_sha256": "d10bcc551b52d64390745ffd7bfa4af1280e4702473bafb648cbc4bbe186bf73",
+  "paid_requests_sent": 0,
+  "benchmark_episodes_launched": 0,
+  "connectivity_probe_launched": false,
+  "independent_review": "FOLDED_CODE_REVIEW_2026-10-29.md",
+  "performance_claim": "unmeasured"
+}

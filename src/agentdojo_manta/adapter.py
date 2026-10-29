@@ -227,6 +227,8 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
                     validate_flash_response(response)
                 if use_reasoning_history:
                     actor_context.pro_history.remember(response)
+                if getattr(actor_context, "folded_request", False) and not client._completion_has_usable_choice(response):
+                    raise ValueError("Folded provider returned no usable assistant choice")
                 if budget is not None:
                     record["cost_upper_bound_usd"] = budget.settle(reservation, usage)
                 record.update(status="completed", usage_available=usage is not None,
@@ -251,6 +253,52 @@ def _make_llm_client(paths: AdapterPaths, model: str | None = None, *, observer=
 
         client.generate = observed_generate
         client._create_chat_completion_once = observed_once
+
+        def complete_folded(*, messages, tools, agent_id, history):
+            """One observed request in a persistent physical loop (no mock path).
+
+            Each loop supplies its own reasoning history. Nested verifier/worker
+            calls cannot overwrite the main loop's retained tool-turn reasoning.
+            """
+            if client.client is None or not use_reasoning_history:
+                raise RuntimeError("Folded execution requires the live reasoning-aware Flash transport")
+            from agentdojo_manta.deepseek_pro import ProReasoningHistory
+            history.setdefault("wire", ProReasoningHistory())
+            history.setdefault("generation_id", uuid.uuid4().hex)
+            previous = {key: getattr(actor_context, key, None) for key in
+                        ("agent_id", "agent_type", "generation_id", "pro_history", "folded_request")}
+            actor_context.agent_id = agent_id
+            actor_context.agent_type = "auditor" if agent_id == "action_verifier" else "general"
+            actor_context.generation_id = history["generation_id"]
+            actor_context.pro_history = history["wire"]
+            actor_context.folded_request = True
+            try:
+                kwargs = dict(model=model_name, messages=messages, temperature=0.0)
+                if tools:
+                    kwargs["tools"] = tools
+                # No hidden transport retries in this profile: one completion
+                # means one journaled provider attempt. Queue-level infra retry
+                # retains its own attempt directory and accounting.
+                kwargs = client._apply_openrouter_sampling_overrides(kwargs, temperature=0.0)
+                kwargs.setdefault("timeout", client.config.timeout_s)
+                if tools:
+                    kwargs["parallel_tool_calls"] = False
+                prepared = history["wire"].prepare(kwargs)
+                # Conservative byte-based input allowance, including retained
+                # reasoning and tool schemas; no remote tokenizer call needed.
+                upper_input = len(json.dumps(prepared, ensure_ascii=False, default=str).encode("utf-8")) + 4096
+                if upper_input + int(kwargs["max_tokens"]) > history["remaining_tokens"]:
+                    from MAS.self_evolved.agent_loop import ResourceLimit
+                    raise ResourceLimit("Remaining episode budget cannot reserve this request's input/output allowance.")
+                try:
+                    return client._create_chat_completion_once(**kwargs)
+                except ValueError as exc:
+                    raise RuntimeError("Folded provider protocol validation failed") from exc
+            finally:
+                for key, value in previous.items():
+                    setattr(actor_context, key, value)
+
+        client.complete_folded = complete_folded
     return client
 
 
@@ -392,10 +440,11 @@ class MantaAgentDojoPipeline(BasePipelineElement):
         self.paths = paths
         from agentdojo_manta.providers import provider_config
         self.model = provider_config(model).model
-        if team_profile not in {"baseline", "adaptive_native"}:
+        if team_profile not in {"baseline", "adaptive_native", "folded_adaptive"}:
             raise ValueError("Unknown team profile")
         self.team_profile = team_profile
-        adaptive = team_profile == "adaptive_native"
+        adaptive = team_profile in {"adaptive_native", "folded_adaptive"}
+        folded = team_profile == "folded_adaptive"
         if adaptive and (self.model != "deepseek-flash" or provider_config(model).name != "deepseek"):
             raise ValueError("Adaptive experiment requires the explicit official deepseek-flash route")
         self.num_agents = int(num_agents)
@@ -414,6 +463,10 @@ class MantaAgentDojoPipeline(BasePipelineElement):
             self.max_initial_agents,
             int(os.getenv("MANTA_MAX_TOTAL_AGENTS", "10")),
         )
+        if folded:
+            self.num_agents = 1
+            self.max_initial_agents = 1
+            self.max_total_agents = 4  # main + two investigations + one verifier
         self.se_config = SelfEvolvedConfig(
             harness_backend="openrouter",
             initial_planner_mode=initial_planner_mode,
@@ -421,17 +474,23 @@ class MantaAgentDojoPipeline(BasePipelineElement):
             max_total_agents=self.max_total_agents,
             max_turns=int(max_turns),
             repair_budget=int(repair_budget),
-            audit_mode=audit_mode,
+            audit_mode="heuristic" if folded else audit_mode,
             write_protocol="adaptive_native" if adaptive else "transactional_star",
             playbook_path=str(paths.playbook_path),
             skill_path=str(paths.skill_path),
             skill_update_batch_size=0,
         )
         self.se_config.validate()
-        self._engine = SelfEvolvedEngine(_make_llm_client(paths, self.model, observer=self, thinking_protocol=adaptive), self.se_config)
+        client = _make_llm_client(paths, self.model, observer=self, thinking_protocol=adaptive)
+        if folded:
+            from MAS.self_evolved.agent_loop import FoldedEngine
+            config_path = Path(__file__).resolve().parents[2] / "docs/manta/flash_folded_config.json"
+            self._engine = FoldedEngine(client, json.loads(config_path.read_text(encoding="utf-8"))["folded"])
+        else:
+            self._engine = SelfEvolvedEngine(client, self.se_config)
         self._experiment_spec = ExperimentSpec(
             topology="self_evolved",
-            num_agents=int(num_agents),
+            num_agents=self.num_agents,
             rounds=1,
             discussion_rounds=1,
             communication_budget_per_agent=2,
@@ -453,7 +512,10 @@ class MantaAgentDojoPipeline(BasePipelineElement):
         """
 
         lookup: dict[str, str] = {}
-        for task in list(suite.user_tasks.values()) + list(suite.injection_tasks.values()):
+        tasks = list(suite.user_tasks.values())
+        if self.team_profile != "folded_adaptive":
+            tasks += list(suite.injection_tasks.values())
+        for task in tasks:
             prompt = getattr(task, "PROMPT", None) or getattr(task, "GOAL", None)
             if isinstance(prompt, str):
                 lookup[prompt] = str(task.ID)
@@ -468,6 +530,14 @@ class MantaAgentDojoPipeline(BasePipelineElement):
         extra_args: dict | None = None,
     ) -> tuple[str, FunctionsRuntime, Env, list[ChatMessage], dict]:
         extra_args = dict(extra_args or {})
+        if self.team_profile == "folded_adaptive":
+            self.request_records = []
+            self.runtime_calls = []
+            self.mock_used = False
+            self.execution_completed = False
+            self.provider_fatal_error = None
+            self.last_run_metadata = {}
+            self.last_trace_events = []
         from agentdojo.logging import Logger
         self.injections = dict(getattr(Logger.get(), "context", {}).get("injections", {}))
         task_id = str(extra_args.get("task_id") or self.task_id_lookup.get(query, "agentdojo_task"))
@@ -495,9 +565,9 @@ class MantaAgentDojoPipeline(BasePipelineElement):
             "max_turns": self.se_config.max_turns,
             "repair_budget": self.se_config.repair_budget,
             "initial_planner_mode": self.se_config.initial_planner_mode,
-            "audit_mode": self.se_config.audit_mode,
+            "audit_mode": "selective_pre_action" if self.team_profile == "folded_adaptive" else self.se_config.audit_mode,
             "team_profile": self.team_profile,
-            "write_protocol": self.se_config.write_protocol,
+            "write_protocol": "guarded_native" if self.team_profile == "folded_adaptive" else self.se_config.write_protocol,
             "skill_update_batch_size": self.se_config.skill_update_batch_size,
         }
         extra_args = {**extra_args, "manta_run_metadata": metadata, "manta_trace_events": result.trace_events}

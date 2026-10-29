@@ -20,7 +20,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-dir", type=Path, required=True)
     args = parser.parse_args()
-    load_dotenv(ROOT / ".env", override=False)
+    load_dotenv(Path(os.getenv("DOTENV_SOURCE_FILE", str(ROOT / ".env"))), override=False)
     from agentdojo_manta.providers import provider_config
     from agentdojo_manta.budget import RequestBudget
     from agentdojo_manta.deepseek_pro import validate_flash_response

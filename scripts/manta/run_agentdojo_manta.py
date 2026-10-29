@@ -61,8 +61,8 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-turns", type=int, default=2)
     parser.add_argument("--repair-budget", type=int, default=1)
     parser.add_argument("--planner-mode", choices=["task_conditioned", "fixed"], default="task_conditioned")
-    parser.add_argument("--audit-mode", choices=["heuristic", "hybrid", "llm_judge"], default="heuristic")
-    parser.add_argument("--team-profile", choices=["baseline", "adaptive_native"], default="baseline")
+    parser.add_argument("--audit-mode", choices=["heuristic", "hybrid", "llm_judge", "selective_pre_action"], default="heuristic")
+    parser.add_argument("--team-profile", choices=["baseline", "adaptive_native", "folded_adaptive"], default="baseline")
     parser.add_argument("--benchmark-version", default="v1.2.2")
     parser.add_argument("--logdir", type=Path, default=None)
     parser.add_argument("--output-dir", type=Path, default=None)
@@ -74,6 +74,11 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = _build_parser().parse_args()
+    if args.team_profile == "folded_adaptive":
+        args.num_agents = 1
+        args.audit_mode = "selective_pre_action"
+        if args.max_turns != 2 or args.repair_budget != 1:
+            raise SystemExit("Folded profile has one main phase and one bounded local recovery; keep max-turns=2 and repair-budget=1")
     if not args.clean and not (args.attack and args.injection_task):
         raise SystemExit("use --clean, or provide --attack and --injection-task")
     if args.clean and (args.attack or args.injection_task):
@@ -179,7 +184,7 @@ def main() -> int:
     metadata = dict(pipeline.last_run_metadata)
     mock_used = pipeline.mock_used
     request_records = list(pipeline.request_records)
-    if os.getenv("MANTA_PROVIDER", "deepseek") != "deepseek" or pipeline.model == "deepseek-v4-pro" or args.team_profile == "adaptive_native":
+    if os.getenv("MANTA_PROVIDER", "deepseek") != "deepseek" or pipeline.model == "deepseek-v4-pro" or args.team_profile in {"adaptive_native", "folded_adaptive"}:
         completed = [r for r in request_records if r.get("status") == "completed"]
         if not completed or getattr(pipeline, "provider_fatal_error", None) or any(not r.get("usage_available") for r in completed):
             error_status, error_message = "INFRA_ERROR", "Live usage/model validation failed; not a valid safety result"
@@ -195,7 +200,7 @@ def main() -> int:
         "adapter_source_digest": _source_digest([repo_root / "src" / "agentdojo_manta", Path(__file__)]),
         "manta_commit": _manta_commit(manta_root),
         "manta_source_digest": _source_digest([manta_root]),
-        "manta_source_status": "UPSTREAM_WITH_ADAPTIVE_NATIVE_EXPERIMENT_PATCH" if args.team_profile == "adaptive_native" else "UPSTREAM_WITH_TOOL_PROTOCOL_PATCH",
+        "manta_source_status": "UPSTREAM_WITH_FOLDED_EXECUTION_PATCH" if args.team_profile == "folded_adaptive" else "UPSTREAM_WITH_ADAPTIVE_NATIVE_EXPERIMENT_PATCH" if args.team_profile == "adaptive_native" else "UPSTREAM_WITH_TOOL_PROTOCOL_PATCH",
         "team_profile": args.team_profile,
         "suite": args.suite,
         "task_id": args.user_task,
@@ -222,6 +227,9 @@ def main() -> int:
         **resource_metrics(request_records, mock_used=mock_used),
         "llm_requests": request_records,
         "agentdojo_runtime_calls": pipeline.runtime_calls,
+        "folded_execution": metadata.get("execution_plan"),
+        "gateway_events": metadata.get("gateway_events"),
+        "action_reviews": metadata.get("action_reviews"),
         "tool_effect": "UNKNOWN",
         "latency_s": round(latency_s, 3),
         "mock_used": mock_used,

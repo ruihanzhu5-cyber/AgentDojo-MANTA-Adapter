@@ -93,20 +93,21 @@ def main():
     parser.add_argument("--max-attempts", type=int, default=2)
     parser.add_argument("--max-output-tokens", type=int, default=4096)
     parser.add_argument("--budget-db", type=Path, default=None, help="Explicit shared Pro cumulative ledger")
-    parser.add_argument("--team-profile", choices=["baseline", "adaptive_native"], default="baseline")
+    parser.add_argument("--team-profile", choices=["baseline", "adaptive_native", "folded_adaptive"], default="baseline")
     args = parser.parse_args()
     if args.parallelism is None:
         args.parallelism = 1 if args.pilot else 8
     if args.pilot and args.parallelism > 2:
         parser.error("Initial GPT-4o pilot parallelism must be 1 or 2")
     from dotenv import load_dotenv
-    load_dotenv(ROOT / ".env", override=False)
+    load_dotenv(Path(os.getenv("DOTENV_SOURCE_FILE", str(ROOT / ".env"))), override=False)
     if args.provider:
         os.environ["MANTA_PROVIDER"] = args.provider
     provider = os.getenv("MANTA_PROVIDER", "deepseek")
     gpt4o = provider != "deepseek"
     pro = provider == "deepseek" and os.getenv("DEEPSEEK_MODEL") == "deepseek-v4-pro"
-    adaptive = args.team_profile == "adaptive_native"
+    folded = args.team_profile == "folded_adaptive"
+    adaptive = args.team_profile in {"adaptive_native", "folded_adaptive"}
     if adaptive and (provider != "deepseek" or os.getenv("DEEPSEEK_MODEL") != "deepseek-flash" or args.pilot):
         parser.error("Adaptive profile requires official deepseek-flash, not a pilot")
     if adaptive and any(os.getenv(k, "deepseek-flash") != "deepseek-flash" for k in ("DEEPSEEK_PLANNER_MODEL", "DEEPSEEK_AUDITOR_MODEL")):
@@ -124,7 +125,8 @@ def main():
         if pro:
             args.run_dir = ROOT / "results/v1/formal_80_seed42_deepseek_pro"
         if adaptive:
-            args.run_dir = Path(json.loads((ROOT / "docs/manta/flash_adaptive_config.json").read_text(encoding="utf-8"))["run_dir"])
+            config_file = "flash_folded_config.json" if folded else "flash_adaptive_config.json"
+            args.run_dir = Path(json.loads((ROOT / "docs/manta" / config_file).read_text(encoding="utf-8"))["run_dir"])
     from agentdojo_manta.adapter import AdapterPaths, _import_manta
     from agentdojo_manta.budget import RequestBudget, GPT4oBudget, DeepSeekProBudget
     from agentdojo_manta.metrics import summarize
@@ -141,7 +143,8 @@ def main():
         binding = provider_config("gpt-4o")
         # The published baseline contains no environment overrides. Prevent accidental
         # inherited settings from changing its engine, sampling, tool memory or roles.
-        forbidden = [k for k in os.environ if k.startswith(("MAS_", "MANTA_", "OPENROUTER_")) and k != "MANTA_PROVIDER"]
+        forbidden = [k for k in os.environ if k.startswith(("MAS_", "MANTA_", "OPENROUTER_")) and k != "MANTA_PROVIDER"
+                     and not k.endswith(("_KEY", "_ACCESS_TOKEN", "_SECRET", "_PASSWORD"))]
         if forbidden:
             parser.error(f"Remove unverified inherited runtime overrides: {', '.join(sorted(forbidden))}")
         manifest = load_replication_plan(ROOT, provider=provider, source_digest=fingerprint(), pilot=args.pilot)
@@ -151,7 +154,8 @@ def main():
             manifest["pricing_evidence_sha256"] = hashlib.sha256(Path(os.environ["GPT4O_PRICING_EVIDENCE"]).read_bytes()).hexdigest()
     elif pro or adaptive:
         from agentdojo_manta.replication import load_replication_plan
-        forbidden = [k for k in os.environ if k.startswith(("MAS_", "MANTA_", "OPENROUTER_")) and k != "MANTA_PROVIDER"]
+        forbidden = [k for k in os.environ if k.startswith(("MAS_", "MANTA_", "OPENROUTER_")) and k != "MANTA_PROVIDER"
+                     and not k.endswith(("_KEY", "_ACCESS_TOKEN", "_SECRET", "_PASSWORD"))]
         if forbidden:
             parser.error(f"Remove unverified runtime overrides: {', '.join(sorted(forbidden))}")
         manifest = load_replication_plan(ROOT, provider="deepseek", source_digest=fingerprint(), model="deepseek-flash" if adaptive else "deepseek-v4-pro")
@@ -167,6 +171,14 @@ def main():
         manifest["max_operations_per_mutation"] = 3
         manifest["pricing_rates_usd_per_million"] = {"input": 0.3, "output": 1.2}
         manifest["experiment_config_sha256"] = hashlib.sha256((ROOT / "docs/manta/flash_adaptive_config.json").read_bytes()).hexdigest()
+    if folded:
+        folded_config = json.loads((ROOT / "docs/manta/flash_folded_config.json").read_text(encoding="utf-8"))
+        manifest.update(protocol="manta-agentdojo-folded-flash-v1", write_protocol="guarded_native",
+            audit_mode="selective_pre_action", physical_limits=dict(initial=1, workers=2, verifier=1),
+            folded=folded_config["folded"], baseline_reference="reports/2026-10-28-deepseek-flash-adaptive",
+            experiment_config_sha256=hashlib.sha256((ROOT / "docs/manta/flash_folded_config.json").read_bytes()).hexdigest())
+        manifest["config"].update(num_agents=1, audit_mode="selective_pre_action", team_profile="folded_adaptive")
+        manifest["adaptive_limits"] = dict(max_initial_agents=1, max_total_agents=4)
     manifest["mock"] = args.smoke
     if args.limit:
         jobs = manifest["jobs"]
@@ -180,6 +192,8 @@ def main():
         manifest["budget_db"] = str((args.budget_db or run_dir / "budget.sqlite").resolve())
     if adaptive:
         protected = {"formal_80_seed42", "formal_80_seed42_gpt4o", "formal_80_seed42_deepseek_pro", "formal_80_seed42_deepseek_pro_16k"}
+        if folded:
+            protected.add("formal_80_seed42_deepseek_flash_adaptive")
         if run_dir.name in protected or run_dir.is_relative_to(ROOT / "reports"):
             parser.error("Adaptive experiment must use its own private result directory")
     if pro and run_dir in {(ROOT / "results/v1/formal_80_seed42").resolve(), (ROOT / "results/v1/formal_80_seed42_gpt4o").resolve()}:
@@ -311,7 +325,7 @@ def main():
             if args.smoke:
                 command.append("--allow-mock")
             env = os.environ.copy()
-            env.update(MANTA_MAX_INITIAL_AGENTS="5", MANTA_MAX_TOTAL_AGENTS="10",
+            env.update(MANTA_MAX_INITIAL_AGENTS="1" if folded else "5", MANTA_MAX_TOTAL_AGENTS="4" if folded else "10",
                        V1_LLM_TIMEOUT_S="180", PYTHONIOENCODING="utf-8")
             if budget:
                 if gpt4o:

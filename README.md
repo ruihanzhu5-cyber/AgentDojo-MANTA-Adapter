@@ -24,6 +24,9 @@ Flash 自适应轮使用显式 `adaptive_native` 补丁保留实际组结构及�
 
 ## 本地入口
 
+新代码分支提供 **[Flash 16K 共享主循环与动作门控](docs/manta/FOLDED_FLASH_16K.md)**，
+profile 为 `folded_adaptive`。配置与启动入口已独立准备；尚未跑实验，不属于上面的四组已完成结果。
+
 运行环境使用 `uv sync --locked --no-dev --python 3.12`。复制 `.env.example` 为 `.env` 后填写自己的凭证；不要上传 `.env`。配置和启动说明见 [适配层文档](docs/manta/GPT4O_ADAPTER.md)。报告导出为离线操作，不发送模型请求。
 
 下方保留上游 AgentDojo 的介绍、安装与引用信息。
