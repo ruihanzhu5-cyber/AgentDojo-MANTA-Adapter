@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-29",
+  "status": "OFFLINE_ONLY_PASSED",
+  "branch": "codex/manta-fw-ablation",
+  "base_commit": "e85b3b00f",
+  "targeted_unit_checks": 32,
+  "powershell_syntax": "passed",
+  "manifest_parity": "80 scenes and payload hashes identical, 160 jobs per arm",
+  "total_planned_episodes": 320,
+  "source_sha256": "472008e47ae75337490f53e5efb1251b4bf0f3231a3b089a7d0d73f2ca855d2b",
+  "network": "socket connections disabled during verification",
+  "experiment_queue": "blocked by local stub during dry-run",
+  "paid_requests_sent": 0,
+  "benchmark_episodes_launched": 0,
+  "connectivity_probe_launched": false,
+  "scope": "targeted offline checks only; unrelated historical private-fixture tests are not claimed passing"
+}

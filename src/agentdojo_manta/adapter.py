@@ -435,6 +435,7 @@ class MantaAgentDojoPipeline(BasePipelineElement):
         initial_planner_mode: str = "task_conditioned",
         audit_mode: str = "heuristic",
         team_profile: str = "baseline",
+        worker_policy: str = "on_demand",
     ) -> None:
         _OpenRouterConfig, SelfEvolvedConfig, _Client, ExperimentSpec, SelfEvolvedEngine = _import_manta(paths)
         self.paths = paths
@@ -445,6 +446,9 @@ class MantaAgentDojoPipeline(BasePipelineElement):
         self.team_profile = team_profile
         adaptive = team_profile in {"adaptive_native", "folded_adaptive"}
         folded = team_profile == "folded_adaptive"
+        if worker_policy not in {"on_demand", "fixed_two"} or (worker_policy != "on_demand" and not folded):
+            raise ValueError("Worker policy override requires the folded profile.")
+        self.worker_policy = worker_policy
         if adaptive and (self.model != "deepseek-flash" or provider_config(model).name != "deepseek"):
             raise ValueError("Adaptive experiment requires the explicit official deepseek-flash route")
         self.num_agents = int(num_agents)
@@ -485,7 +489,7 @@ class MantaAgentDojoPipeline(BasePipelineElement):
         if folded:
             from MAS.self_evolved.agent_loop import FoldedEngine
             config_path = Path(__file__).resolve().parents[2] / "docs/manta/flash_folded_config.json"
-            self._engine = FoldedEngine(client, json.loads(config_path.read_text(encoding="utf-8"))["folded"])
+            self._engine = FoldedEngine(client, json.loads(config_path.read_text(encoding="utf-8"))["folded"], worker_policy)
         else:
             self._engine = SelfEvolvedEngine(client, self.se_config)
         self._experiment_spec = ExperimentSpec(
@@ -567,6 +571,7 @@ class MantaAgentDojoPipeline(BasePipelineElement):
             "initial_planner_mode": self.se_config.initial_planner_mode,
             "audit_mode": "selective_pre_action" if self.team_profile == "folded_adaptive" else self.se_config.audit_mode,
             "team_profile": self.team_profile,
+            "worker_policy": self.worker_policy,
             "write_protocol": "guarded_native" if self.team_profile == "folded_adaptive" else self.se_config.write_protocol,
             "skill_update_batch_size": self.se_config.skill_update_batch_size,
         }

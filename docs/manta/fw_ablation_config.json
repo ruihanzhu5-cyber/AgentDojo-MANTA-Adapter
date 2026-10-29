@@ -1,0 +1,25 @@
+{
+  "protocol": "manta-agentdojo-fw-scheduling-v1",
+  "status": "prepared_not_launched",
+  "base_commit": "e85b3b00f",
+  "base_config": "docs/manta/flash_folded_config.json",
+  "provider": "deepseek",
+  "endpoint": "https://api.deepseek.com/v1",
+  "model": "deepseek-flash",
+  "max_output_tokens": 16384,
+  "seed": 42,
+  "scene_count": 80,
+  "episodes_per_arm": 160,
+  "total_episodes": 320,
+  "parallelism": 8,
+  "max_attempts": 2,
+  "budget_usd": 100,
+  "budget_scope": "one independent shared F+W cap including one connectivity probe",
+  "run_dir": "D:\\MANTA_DATA\\AgentDojo\\ablation_fw_flash16k_seed42",
+  "arms": {
+    "F": {"worker_policy": "on_demand", "description": "Current complete folded method; worker creation remains optional"},
+    "W": {"worker_policy": "fixed_two", "description": "One charged main assignment response, then two real pure-read investigations before main continuation"}
+  },
+  "ordering": "seed42 shuffled scene-condition pairs; randomized F/W order within each pair",
+  "launcher_owner": "user"
+}

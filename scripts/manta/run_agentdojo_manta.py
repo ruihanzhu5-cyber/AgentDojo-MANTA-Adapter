@@ -63,6 +63,8 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--planner-mode", choices=["task_conditioned", "fixed"], default="task_conditioned")
     parser.add_argument("--audit-mode", choices=["heuristic", "hybrid", "llm_judge", "selective_pre_action"], default="heuristic")
     parser.add_argument("--team-profile", choices=["baseline", "adaptive_native", "folded_adaptive"], default="baseline")
+    parser.add_argument("--worker-policy", choices=["on_demand", "fixed_two"], default="on_demand")
+    parser.add_argument("--comparison-source-sha256", default=None)
     parser.add_argument("--benchmark-version", default="v1.2.2")
     parser.add_argument("--logdir", type=Path, default=None)
     parser.add_argument("--output-dir", type=Path, default=None)
@@ -90,6 +92,10 @@ def main() -> int:
         os.environ.pop("MAS_DISABLE_LIVE_LLM", None)
 
     repo_root = _repo_root()
+    if args.comparison_source_sha256:
+        from run_formal import fingerprint
+        if fingerprint() != args.comparison_source_sha256:
+            raise SystemExit("Comparison source changed before execution; no API request sent")
     dojo_root = repo_root
     manta_root = Path(os.getenv("MANTA_SOURCE_DIR", str(repo_root / "upstreams" / "manta")))
     if not (dojo_root / "src" / "agentdojo").exists() or not manta_root.exists():
@@ -116,6 +122,7 @@ def main() -> int:
         initial_planner_mode=args.planner_mode,
         audit_mode=args.audit_mode,
         team_profile=args.team_profile,
+        worker_policy=args.worker_policy,
     )
     pipeline.bind_suite(suite)
     # AgentDojo does not supply extra_args when calling custom pipelines.
@@ -191,6 +198,11 @@ def main() -> int:
     if any(r.get("error_type") == "BudgetExceeded" for r in request_records):
         error_status, error_message = "BLOCKED", "Request budget exhausted; episode is not a valid safety result"
     exposed_records = [r for r in request_records if r["status"] == "completed" and r["matched_injection_keys"]]
+    comparison_source = None
+    if args.comparison_source_sha256:
+        comparison_source = fingerprint()
+        if comparison_source != args.comparison_source_sha256:
+            error_status, error_message = "CONFIG_ERROR", "Comparison source changed during execution"
     result: dict[str, Any] = {
         "benchmark": "agentdojo",
         "system": "MANTA",
@@ -202,6 +214,10 @@ def main() -> int:
         "manta_source_digest": _source_digest([manta_root]),
         "manta_source_status": "UPSTREAM_WITH_FOLDED_EXECUTION_PATCH" if args.team_profile == "folded_adaptive" else "UPSTREAM_WITH_ADAPTIVE_NATIVE_EXPERIMENT_PATCH" if args.team_profile == "adaptive_native" else "UPSTREAM_WITH_TOOL_PROTOCOL_PATCH",
         "team_profile": args.team_profile,
+        "worker_policy": args.worker_policy,
+        "comparison_source_sha256": comparison_source,
+        "fixed_two_fulfilled": metadata.get("fixed_two_fulfilled"),
+        "worker_execution": metadata.get("worker_execution"),
         "suite": args.suite,
         "task_id": args.user_task,
         "injection_task": args.injection_task,
@@ -239,7 +255,9 @@ def main() -> int:
         "official_logdir": str(logdir),
     }
     path = output_dir / "result.json"
-    path.write_text(json.dumps(result, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+    pending_result = output_dir / "result.json.tmp"
+    pending_result.write_text(json.dumps(result, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+    pending_result.replace(path)
     private_fields = {"manta_metadata", "manta_trace_events", "agentdojo_runtime_calls", "llm_requests", "attack_exposure_evidence"}
     print(json.dumps({k: v for k, v in result.items() if k not in private_fields}, ensure_ascii=False, indent=2))
     print(f"result_path={path}")

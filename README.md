@@ -24,6 +24,10 @@ Flash 自适应轮使用显式 `adaptive_native` 补丁保留实际组结构及�
 
 ## 本地入口
 
+本分支新增 **[F/W 调度对照配置与启动说明](docs/manta/FW_ABLATION.md)**：
+F 保留完整按需调查策略，W 固定双只读 worker；320 条新 episode，D 盘分组落盘，合计 $100 台账。
+当前只准备代码，实验由用户启动。
+
 新代码分支提供 **[Flash 16K 共享主循环与动作门控](docs/manta/FOLDED_FLASH_16K.md)**，
 profile 为 `folded_adaptive`。配置与启动入口已独立准备；尚未跑实验，不属于上面的四组已完成结果。
 
